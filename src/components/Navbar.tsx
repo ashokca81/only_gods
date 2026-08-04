@@ -71,7 +71,7 @@ const Navbar = () => {
               {/* Mobile Glassy Pill Toggle (Logo + Menu) */}
               <button
                 onClick={toggleMenu}
-                className={`lg:hidden relative flex items-center gap-2 p-1.5 pr-4 rounded-full transition-all duration-300 backdrop-blur-3xl border shadow-lg ${
+                className={`lg:hidden relative flex items-center gap-1 p-0.5 pr-2.5 rounded-full transition-all duration-300 backdrop-blur-3xl border shadow-lg ${
                   scrolled || !isHome || mobileOpen 
                     ? "bg-black/10 border-black/20 text-black" 
                     : "bg-white/25 border-white/30 text-white"
@@ -80,13 +80,13 @@ const Navbar = () => {
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileOpen}
               >
-                <div className={`w-[30px] h-[30px] shrink-0 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm backdrop-blur-md ${
+                <div className={`w-[24px] h-[24px] shrink-0 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm backdrop-blur-md ${
                   scrolled || !isHome || mobileOpen ? "bg-white/90" : "bg-black/40"
                 } ${mobileOpen ? "rotate-45" : ""}`}>
-                  <Plus size={18} strokeWidth={2.5} />
+                  <Plus size={14} strokeWidth={2.5} />
                 </div>
                 
-                <div className="relative h-[22px] flex items-center shrink-0">
+                <div className="relative h-[16px] flex items-center shrink-0">
                   <img
                     src="/dark_logo.png"
                     alt="Only Gods"
@@ -116,7 +116,7 @@ const Navbar = () => {
 
             {/* Center Section: Logo (Desktop Only) */}
             <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center pointer-events-none z-50">
-              <Link href="/" className={`flex items-center relative pointer-events-auto transition-all duration-500 ${scrolled ? 'h-8 lg:h-12 w-36 lg:w-56' : 'h-10 lg:h-16 w-44 lg:w-72'}`}>
+              <Link href="/" className="flex items-center relative pointer-events-auto transition-all duration-500 h-6 lg:h-7 w-28 lg:w-36">
                 <img
                   src="/dark_logo.png"
                   alt="Only Gods"
@@ -134,22 +134,22 @@ const Navbar = () => {
             <div className={`flex items-center gap-2 lg:gap-5 ${textClass}`}>
               <button
                 onClick={() => setSearchOpen(true)}
-                className={`flex items-center justify-center transition-all duration-300 w-9 h-9 lg:w-auto lg:h-auto rounded-full lg:rounded-none backdrop-blur-3xl lg:backdrop-blur-none lg:bg-transparent shadow-lg lg:shadow-none lg:hover:opacity-60 border lg:border-none ${
+                className={`flex items-center justify-center transition-all duration-300 w-8 h-8 lg:w-auto lg:h-auto rounded-full lg:rounded-none backdrop-blur-3xl lg:backdrop-blur-none lg:bg-transparent shadow-lg lg:shadow-none lg:hover:opacity-60 border lg:border-none ${
                   scrolled || !isHome || mobileOpen ? 'bg-black/10 border-black/20 lg:bg-transparent' : 'bg-white/25 border-white/30 lg:bg-transparent'
                 }`}
               >
-                <Search className="w-[18px] h-[18px] lg:w-5 lg:h-5" />
+                <Search className="w-4 h-4 lg:w-5 lg:h-5" />
               </button>
               
               {mounted && (
                 <button
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className={`flex items-center justify-center transition-all duration-300 w-9 h-9 lg:w-auto lg:h-auto rounded-full lg:rounded-none backdrop-blur-3xl lg:backdrop-blur-none lg:bg-transparent shadow-lg lg:shadow-none lg:hover:opacity-60 border lg:border-none ${
+                  className={`flex items-center justify-center transition-all duration-300 w-8 h-8 lg:w-auto lg:h-auto rounded-full lg:rounded-none backdrop-blur-3xl lg:backdrop-blur-none lg:bg-transparent shadow-lg lg:shadow-none lg:hover:opacity-60 border lg:border-none ${
                     scrolled || !isHome || mobileOpen ? 'bg-black/10 border-black/20 lg:bg-transparent' : 'bg-white/25 border-white/30 lg:bg-transparent'
                   }`}
                   aria-label="Toggle theme"
                 >
-                  {theme === 'dark' ? <Sun className="w-[18px] h-[18px] lg:w-5 lg:h-5" /> : <Moon className="w-[18px] h-[18px] lg:w-5 lg:h-5" />}
+                  {theme === 'dark' ? <Sun className="w-4 h-4 lg:w-5 lg:h-5" /> : <Moon className="w-4 h-4 lg:w-5 lg:h-5" />}
                 </button>
               )}
 

@@ -69,23 +69,14 @@ const Hero = () => {
         >
           <Link
             href="/shop"
-            className="inline-block group bg-white text-black px-12 py-5 text-sm md:text-base font-black uppercase tracking-[0.25em] hover:bg-neutral-200 transition-all duration-300 hover:scale-105 shadow-xl"
+            className="inline-block group text-white px-8 py-4 text-sm md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
           >
             Shop Now
           </Link>
         </motion.div>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
-      >
-        <span className="text-[10px] text-white/50 tracking-[0.2em] uppercase">Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent opacity-50" />
-      </motion.div>
+
 
     </section>
   );
