@@ -137,7 +137,7 @@ export default function HomePage() {
                                     <img
                                         src={trending[0].image}
                                         alt={trending[0].name}
-                                        className="w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105"
+                                        className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
@@ -173,7 +173,7 @@ export default function HomePage() {
                                 className="col-span-1 lg:col-span-5 group relative"
                             >
                                 <Link href={`/product/${trending[1].id}`} className="block relative aspect-[3/4] lg:aspect-auto h-auto lg:h-[75vh] overflow-hidden">
-                                    <img src={trending[1].image} alt={trending[1].name} className="w-full h-full object-cover transition-transform duration-[1s] ease-out group-hover:scale-105" />
+                                    <img src={trending[1].image} alt={trending[1].name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-colors duration-500" />
                                     <span className="absolute top-4 right-6 text-6xl lg:text-7xl font-black leading-none text-white/[0.08] font-display select-none pointer-events-none">02</span>
                                     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -201,7 +201,7 @@ export default function HomePage() {
                                 className="col-span-1 lg:col-span-4 group relative"
                             >
                                 <Link href={`/product/${product.id}`} className="block relative aspect-[3/4] lg:aspect-auto h-auto lg:h-[55vh] overflow-hidden">
-                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-[1s] ease-out group-hover:scale-105" />
+                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-colors duration-500" />
                                     <span className="absolute top-4 right-6 text-6xl lg:text-7xl font-black leading-none text-white/[0.08] font-display select-none pointer-events-none">
                                         {String(i + 3).padStart(2, '0')}
