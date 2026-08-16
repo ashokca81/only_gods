@@ -10,7 +10,6 @@ const Footer = () => {
         <div className="relative w-40 h-40 md:w-48 md:h-48 border border-neutral-200 dark:border-neutral-800 rounded-full flex flex-col items-center justify-center p-6 text-center bg-white dark:bg-black shadow-2xl shadow-neutral-200/20 dark:shadow-neutral-900/20">
           <h2 className="font-['Pinyon_Script'] text-4xl md:text-5xl mb-2 text-black dark:text-white">Only</h2>
           <h2 className="font-['Pinyon_Script'] text-4xl md:text-5xl text-black dark:text-white">Gods</h2>
-          <p className="text-[10px] tracking-widest mt-2 uppercase font-sans text-neutral-400">Be Divine</p>
         </div>
       </div>
 

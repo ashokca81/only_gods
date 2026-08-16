@@ -71,7 +71,7 @@ const Hero = () => {
       >
         <Link
           href="/shop"
-          className="inline-block group text-white px-8 py-4 text-sm md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
+          className="inline-block group text-white px-6 py-3 md:px-8 md:py-4 text-[10px] md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
         >
           Shop Now
         </Link>

@@ -93,7 +93,7 @@ const AuthModal = () => {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <h2 className="text-xl font-black tracking-[0.2em] uppercase mb-2">
-                            {authView === "login" ? "Welcome Back" : "Join the Elite"}
+                            {authView === "login" ? "Unlock God Mode" : "Join the Elite"}
                         </h2>
                         <p className="text-xs text-muted-foreground tracking-wide">
                             {step === "phone"
