@@ -22,9 +22,10 @@ export default function HomePage() {
             <Navbar />
             <Hero />
 
-
-
-
+            {/* Desktop Runway (hidden on mobile) */}
+            <div className="hidden lg:block">
+                <Runway />
+            </div>
 
             {/* Bento Grid Categories */}
             {/* The Collection - Sticky Split Layout */}
@@ -58,7 +59,7 @@ export default function HomePage() {
             <section className="lg:hidden pt-12 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black">
                 <div className="container mx-auto px-4 lg:px-8">
                     {/* Section Header */}
-                    <div className="mb-4 lg:mb-20">
+                    <div className="mb-2 lg:mb-20">
                         {/* Mobile Layout */}
                         <div className="flex flex-col lg:hidden w-full gap-2">
                             <motion.p
@@ -121,6 +122,11 @@ export default function HomePage() {
                         <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 mt-3 lg:mt-14" />
                     </div>
 
+                    {/* Mobile Runway (hidden on desktop) */}
+                    <div className="lg:hidden mb-4 mt-2 -mx-4">
+                        <Runway />
+                    </div>
+
                     {/* Magazine Grid */}
                     <div className="grid grid-cols-2 lg:grid-cols-12 gap-2 md:gap-4 lg:gap-6">
 
@@ -150,13 +156,6 @@ export default function HomePage() {
                                     <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
                                         <div className="flex items-center w-full">
                                             <span className="text-sm md:text-base lg:text-lg tracking-[0.2em] uppercase text-gray-200 font-bold">{trending[0].category}</span>
-                                        </div>
-                                        <div className="mt-6">
-                                            <div>
-                                                <span className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 text-xs font-bold uppercase tracking-[0.15em]">
-                                                    Shop Now <ArrowRight size={14} />
-                                                </span>
-                                            </div>
                                         </div>
                                     </div>
                                 </Link>
@@ -225,9 +224,6 @@ export default function HomePage() {
 
             {/* Product Grid Section */}
             <ProductGrid />
-
-            {/* Runway / Campaign Section */}
-            <Runway />
 
             {/* Newsletter Parallax or Bold Section */}
             <section className="py-32 bg-black text-white dark:bg-white dark:text-black text-center px-4">

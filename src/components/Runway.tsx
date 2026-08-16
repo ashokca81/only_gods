@@ -76,20 +76,9 @@ const Runway = () => {
     return (
         <>
             {/* MOBILE LAYOUT: Native Horizontal Scroll (Snap) */}
-            <section className="lg:hidden pt-4 pb-20 bg-white text-black dark:bg-neutral-950 dark:text-white overflow-hidden">
-                <div className="px-4 mb-10">
-                    <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-red-500 mb-3 flex items-center gap-2">
-                        <span className="w-6 h-[2px] bg-red-500 inline-block" />
-                        Campaign
-                    </p>
-                    <h2 className="text-5xl font-black uppercase tracking-tighter font-display leading-[0.85]">
-                        Runway<br />
-                        <span className="text-neutral-500">2026</span>
-                    </h2>
-                </div>
-
+            <section className="lg:hidden pt-2 pb-2 bg-white text-black dark:bg-neutral-950 dark:text-white overflow-hidden">
                 {/* Horizontal Scroll Container */}
-                <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar px-4 gap-4 pb-10">
+                <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar px-4 gap-4 pb-4">
                     {looks.map((look) => (
                         <div key={look.id} className="snap-center shrink-0 w-[85vw] mx-auto">
                             <RunwayCard look={look} className="aspect-[3/4] rounded-none" />
@@ -122,14 +111,7 @@ const Runway = () => {
 
                     {/* Header */}
                     <div className="absolute top-20 left-20 z-10 mix-blend-difference text-white">
-                        <p className="text-xs font-bold tracking-[0.3em] uppercase text-red-500 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-[2px] bg-red-500 inline-block" />
-                            Campaign
-                        </p>
-                        <h2 className="text-[5rem] font-black uppercase tracking-tighter font-display leading-none">
-                            Runway<br />
-                            <span className="text-neutral-500">2026</span>
-                        </h2>
+                        {/* Campaign text removed as requested */}
                     </div>
 
                     {/* Horizontal Scroll Track */}

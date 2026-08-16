@@ -61,20 +61,21 @@ const Hero = () => {
           </h1>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
-          className="mt-12"
-        >
-          <Link
-            href="/shop"
-            className="inline-block group text-white px-8 py-4 text-sm md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
-          >
-            Shop Now
-          </Link>
-        </motion.div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1.2 }}
+        className="absolute bottom-0 left-0 w-full flex justify-center z-20"
+      >
+        <Link
+          href="/shop"
+          className="inline-block group text-white px-8 py-4 text-sm md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
+        >
+          Shop Now
+        </Link>
+      </motion.div>
 
 
 
