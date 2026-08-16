@@ -227,10 +227,13 @@ export default function HomePage() {
 
             {/* Newsletter Parallax or Bold Section */}
             <section className="py-32 bg-black text-white dark:bg-white dark:text-black text-center px-4">
-                <div className="max-w-xl mx-auto">
-                    <Star className="w-12 h-12 mx-auto mb-6 text-white dark:text-black" fill="currentColor" />
-                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-6 font-display">
-                        Join the Cult
+                <div className="max-w-3xl mx-auto">
+                    <div className="h-12 md:h-16 flex justify-center mb-8">
+                        <img src="/logo_white.png" alt="Only Gods" className="h-full w-auto object-contain block dark:hidden" />
+                        <img src="/dark_logo.png" alt="Only Gods" className="h-full w-auto object-contain hidden dark:block" />
+                    </div>
+                    <h2 className="text-[6vw] sm:text-3xl md:text-4xl lg:text-6xl whitespace-nowrap font-black uppercase tracking-tight mb-6 font-display">
+                        Join the Club of Gods
                     </h2>
                     <p className="text-lg text-white/60 dark:text-black/60 mb-10">
                         Sign up for exclusive access to drops, limited editions, and private sales.
