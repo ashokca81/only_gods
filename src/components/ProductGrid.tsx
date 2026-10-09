@@ -1,101 +1,22 @@
 'use client';
 
+import Link from "next/link";
 import { Bookmark, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProducts } from "@/hooks/useProducts";
+import { useHomeProducts } from "@/hooks/useHomeProducts";
+import { formatPrice } from "@/lib/format";
 
-const mockProducts = [
-  { 
-    id: 1, 
-    name: "Black Wildloom Hoodie", 
-    price: "RS. 23,000", 
-    images: [
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: false 
-  },
-  { 
-    id: 2, 
-    name: "Brown Star Studded Hoodie", 
-    price: "RS. 17,000", 
-    images: [
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1506634572416-48cdfe530110?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: false 
-  },
-  { 
-    id: 3, 
-    name: "Grey Star Studded Hoodie", 
-    price: "RS. 17,000", 
-    images: [
-      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: false 
-  },
-  { 
-    id: 4, 
-    name: "Brown Wildloom Hoodie", 
-    price: "RS. 23,000", 
-    images: [
-      "https://images.unsplash.com/photo-1506634572416-48cdfe530110?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: false 
-  },
-  { 
-    id: 5, 
-    name: "Meadow Blue Hoodie", 
-    price: "RS. 14,500", 
-    images: [
-      "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: true 
-  },
-  { 
-    id: 6, 
-    name: "Red Serpent Bloom Zipper Hoodie", 
-    price: "RS. 14,000", 
-    images: [
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: true 
-  },
-  { 
-    id: 7, 
-    name: "Black Poison Petals Zipper Hoodie", 
-    price: "RS. 16,000", 
-    images: [
-      "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: true 
-  },
-  { 
-    id: 8, 
-    name: "Black Serpent Bloom Zipper Hoodie", 
-    price: "RS. 14,000", 
-    images: [
-      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1506634572416-48cdfe530110?q=80&w=800&auto=format&fit=crop"
-    ], 
-    hasBookmark: true 
-  },
-];
+interface GridItem {
+  id: string;
+  name: string;
+  price: string;
+  images: string[];
+  hasBookmark: boolean;
+}
 
-const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
+const ProductCard = ({ product }: { product: GridItem }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [animType, setAnimType] = useState<"slide" | "fade">("fade");
@@ -129,8 +50,9 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
   };
 
   return (
-    <div 
-      className="group cursor-pointer"
+    <Link
+      href={`/product/${product.id}`}
+      className="group cursor-pointer block"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -140,7 +62,7 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
           <motion.div
             key={currentIndex}
             custom={direction}
-            initial={animType === "slide" 
+            initial={animType === "slide"
               ? { x: direction > 0 ? "100%" : "-100%", opacity: 1, scale: 1 }
               : { opacity: 0, scale: 1.1, x: 0 }
             }
@@ -152,6 +74,7 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
             transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
             className="absolute inset-0 w-full h-full"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={product.images[currentIndex]}
               alt={product.name}
@@ -161,21 +84,23 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
         </AnimatePresence>
 
         {/* Carousel Navigation Arrows */}
-        <div className="absolute inset-0 flex items-center justify-between px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-          <button 
-            onClick={prevImage}
-            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
-          >
-            <ChevronLeft size={20} className="text-white drop-shadow-md" />
-          </button>
-          <button 
-            onClick={nextImage}
-            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
-          >
-            <ChevronRight size={20} className="text-white drop-shadow-md" />
-          </button>
-        </div>
-        
+        {product.images.length > 1 && (
+          <div className="absolute inset-0 flex items-center justify-between px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={prevImage}
+              className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
+            >
+              <ChevronLeft size={20} className="text-white drop-shadow-md" />
+            </button>
+            <button
+              onClick={nextImage}
+              className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
+            >
+              <ChevronRight size={20} className="text-white drop-shadow-md" />
+            </button>
+          </div>
+        )}
+
         {/* Bookmark Icon */}
         {product.hasBookmark && (
           <div className="absolute top-3 right-3 text-white drop-shadow-md">
@@ -184,16 +109,18 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
         )}
 
         {/* Pagination Dots */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {product.images.map((_, idx) => (
-            <div 
-              key={idx} 
-              className={`w-1.5 h-1.5 rounded-full drop-shadow-md transition-all duration-300 ${
-                idx === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
-              }`} 
-            />
-          ))}
-        </div>
+        {product.images.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {product.images.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full drop-shadow-md transition-all duration-300 ${
+                  idx === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
@@ -206,29 +133,41 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
             {product.price}
           </p>
         </div>
-        <button className="text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white transition-colors mt-0.5">
+        <button
+          onClick={(e) => e.preventDefault()}
+          className="text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white transition-colors mt-0.5"
+        >
           <Plus size={16} strokeWidth={2.5} />
         </button>
       </div>
-    </div>
+    </Link>
   );
 };
 
 const ProductGrid = () => {
+  const { data: products } = useProducts();
+  const pickedIds = useHomeProducts();
+
+  // Admin-picked products (in order); fall back to all products when none chosen.
+  const chosen =
+    pickedIds.length > 0
+      ? pickedIds.map((id) => products.find((p) => p.id === id)).filter((p): p is (typeof products)[number] => !!p)
+      : products;
+
+  const items: GridItem[] = chosen.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: formatPrice(p.price),
+    images: p.images && p.images.length > 0 ? p.images : [p.image],
+    hasBookmark: !!p.newArrival,
+  }));
+
   return (
     <section className="pt-8 pb-4 lg:pt-20 lg:pb-0 bg-white dark:bg-black border-t border-black/10 dark:border-white/10">
       <div className="container mx-auto px-4 lg:px-8">
-        {/* Section Header */}
-        <div className="flex justify-between items-center mb-8 border-b border-black/10 dark:border-white/10 pb-4 hidden">
-          <div className="flex gap-8">
-            <span className="text-sm font-bold uppercase tracking-wider text-black dark:text-white cursor-pointer">New in</span>
-            <span className="text-sm font-medium uppercase tracking-wider text-black/50 dark:text-white/50 cursor-pointer hover:text-black dark:hover:text-white transition-colors">Collections</span>
-          </div>
-        </div>
-
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-6 md:gap-y-10">
-          {mockProducts.map((product) => (
+          {items.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

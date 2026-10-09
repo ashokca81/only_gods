@@ -7,9 +7,15 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: { DEFAULT: "1rem", lg: "2rem" },
+      // Full-width on every screen (no large-screen side gutters) — like the
+      // hero/runway full-bleed sections.
       screens: {
-        "2xl": "1400px",
+        sm: "100%",
+        md: "100%",
+        lg: "100%",
+        xl: "100%",
+        "2xl": "100%",
       },
     },
     extend: {
@@ -62,6 +68,7 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      // -qq design: soft rounded corners.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
