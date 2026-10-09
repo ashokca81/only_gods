@@ -4,11 +4,20 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X } from 'lucide-react';
+import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import ProductReviews from '@/components/ProductReviews';
+import { useProducts } from '@/hooks/useProducts';
+import { formatPrice } from '@/lib/format';
+import { useCart } from '@/buffer/CartContext';
+import { useCustomer } from '@/buffer/CustomerContext';
+import { useUI } from '@/buffer/UIContext';
+import { getVariants, isSoldOut } from '@/lib/variants';
+import { useFlash } from '@/hooks/useFlash';
+import { isFlashActive, flashPrice } from '@/lib/flash';
+import { toast } from 'sonner';
 import {
     Accordion,
     AccordionContent,
@@ -19,11 +28,19 @@ import {
 export default function ProductDetailPage() {
     const params = useParams();
     const id = params?.id as string;
+    const { data: products } = useProducts();
     const product = products.find((p) => p.id === id);
     const [selectedSize, setSelectedSize] = useState('');
+    const [selectedColor, setSelectedColor] = useState('');
     const [quantity, setQuantity] = useState(1);
+    const { addItem } = useCart();
+    const { customer, isWishlisted, toggleWishlist } = useCustomer();
+    const { openAuthModal } = useUI();
     const [selectedImage, setSelectedImage] = useState(0);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+    const [notified, setNotified] = useState(false);
+    const [notifying, setNotifying] = useState(false);
+    const flash = useFlash();
 
     const scrollToImage = (index: number) => {
         const el = document.getElementById(`product-image-${index}`);
@@ -42,8 +59,74 @@ export default function ProductDetailPage() {
     }
 
     const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
-    // Simulate more images for gallery
-    const images = [product.image, "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&h=1600&fit=crop", "https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?w=1200&h=1600&fit=crop", "https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=1200&h=1600&fit=crop"];
+    const videos = product.videos ?? [];
+
+    // ---- per-colour variants (Myntra-style) ----
+    const variants = getVariants(product);
+    const hasColorOptions = variants.some((v) => (v.color ?? '').trim() !== '');
+    const activeColor = selectedColor || variants[0]?.color || '';
+    const activeVariant =
+        variants.find((v) => v.color.toLowerCase() === activeColor.toLowerCase()) ?? variants[0];
+    const images =
+        activeVariant?.images && activeVariant.images.length > 0
+            ? activeVariant.images
+            : (product.images && product.images.length > 0 ? product.images : [product.image]);
+    const sizes = activeVariant?.sizes ?? [];
+    const price = activeVariant ? activeVariant.price : product.price;
+    const originalPrice = activeVariant ? activeVariant.original_price : (product.originalPrice ?? null);
+    const flashOn = isFlashActive(flash);
+    const salePrice = flashPrice(price, flash);
+    const selectedSizeStock = sizes.find((s) => s.size === selectedSize)?.stock ?? 0;
+    const soldOut = isSoldOut(product);
+
+    const selectColor = (c: string) => {
+        setSelectedColor(c);
+        setSelectedSize('');
+        setSelectedImage(0);
+    };
+
+    const notifyMe = async () => {
+        if (!customer) { openAuthModal(); return; }
+        setNotifying(true);
+        try {
+            const res = await fetch('/api/stock-notify', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: product!.id }),
+            });
+            if (res.ok) { setNotified(true); toast.success("We'll notify you when it's back in stock!"); }
+            else toast.error('Could not submit. Try again.');
+        } finally { setNotifying(false); }
+    };
+
+    const handleAddToCart = () => {
+        if (soldOut) {
+            toast.error('This product is sold out');
+            return;
+        }
+        if (!customer) {
+            openAuthModal();
+            toast.error('Please log in to add items to your cart');
+            return;
+        }
+        if (sizes.length > 0 && !selectedSize) {
+            toast.error('Please select a size');
+            return;
+        }
+        if (selectedSize && selectedSizeStock <= 0) {
+            toast.error('Selected size is out of stock');
+            return;
+        }
+        addItem({
+            id: product.id,
+            name: product.name,
+            image: activeVariant?.images?.[0] || product.image,
+            price,
+            size: selectedSize || undefined,
+            color: activeColor || undefined,
+            quantity,
+        });
+        toast.success(`Added to cart — ${product.name}`);
+    };
 
     return (
         <div className="min-h-screen bg-background pb-20 lg:pb-0 flex flex-col">
@@ -69,6 +152,11 @@ export default function ProductDetailPage() {
                                     {images.map((img, i) => (
                                         <div key={i} className="flex-shrink-0 w-[85vw] snap-center rounded-xl overflow-hidden aspect-[3/4] bg-secondary">
                                             <img src={img} alt={`${product.name} view ${i + 1}`} className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                    {videos.map((v, i) => (
+                                        <div key={`v${i}`} className="flex-shrink-0 w-[85vw] snap-center rounded-xl overflow-hidden aspect-[3/4] bg-black">
+                                            <video src={v} controls playsInline className="w-full h-full object-cover" />
                                         </div>
                                     ))}
                                 </div>
@@ -111,6 +199,11 @@ export default function ProductDetailPage() {
                                                 </button>
                                             </div>
                                         ))}
+                                        {videos.map((v, i) => (
+                                            <div key={`v${i}`} className="w-full rounded-2xl overflow-hidden bg-black aspect-[3/4]">
+                                                <video src={v} controls playsInline className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -130,15 +223,27 @@ export default function ProductDetailPage() {
                                             </div>
                                         </div>
                                         <h1 className="text-4xl lg:text-5xl font-black text-foreground font-display uppercase tracking-wide leading-none">{product.name}</h1>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-2xl lg:text-3xl font-bold text-foreground">₹{product.price}</span>
-                                            {product.originalPrice && (
-                                                <span className="text-lg text-muted-foreground line-through decoration-1">₹{product.originalPrice}</span>
-                                            )}
-                                            {product.originalPrice && (
-                                                <span className="px-3 py-1 bg-destructive text-destructive-foreground text-[10px] tracking-[0.1em] uppercase font-bold rounded-full">
-                                                    Save ₹{product.originalPrice - product.price}
-                                                </span>
+                                        <div className="flex items-center gap-4 flex-wrap">
+                                            {flashOn ? (
+                                                <>
+                                                    <span className="text-2xl lg:text-3xl font-bold text-red-600">{formatPrice(salePrice)}</span>
+                                                    <span className="text-lg text-muted-foreground line-through decoration-1">{formatPrice(price)}</span>
+                                                    <span className="px-3 py-1 bg-red-600 text-white text-[10px] tracking-[0.1em] uppercase font-bold rounded-full">
+                                                        ⚡ {flash.percent}% OFF
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-2xl lg:text-3xl font-bold text-foreground">{formatPrice(price)}</span>
+                                                    {originalPrice != null && originalPrice > price && (
+                                                        <span className="text-lg text-muted-foreground line-through decoration-1">{formatPrice(originalPrice)}</span>
+                                                    )}
+                                                    {originalPrice != null && originalPrice > price && (
+                                                        <span className="px-3 py-1 bg-destructive text-destructive-foreground text-[10px] tracking-[0.1em] uppercase font-bold rounded-full">
+                                                            Save {formatPrice(originalPrice - price)}
+                                                        </span>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -151,19 +256,25 @@ export default function ProductDetailPage() {
                                     {/* Selectors */}
                                     <div className="space-y-6">
                                         {/* Color */}
+                                        {hasColorOptions && (
                                         <div>
-                                            <span className="text-xs tracking-[0.2em] uppercase font-bold text-foreground mb-3 block">Color — {product.colors[0]}</span>
-                                            <div className="flex gap-3">
-                                                {product.colors.map((color, i) => (
+                                            <span className="text-xs tracking-[0.2em] uppercase font-bold text-foreground mb-3 block">
+                                                Color{activeVariant?.name ? ` — ${activeVariant.name}` : ''}
+                                            </span>
+                                            <div className="flex flex-wrap gap-3">
+                                                {variants.map((v) => (
                                                     <button
-                                                        key={color}
-                                                        className={`w-10 h-10 rounded-full border-2 transition-all ${i === 0 ? 'border-foreground p-0.5' : 'border-transparent hover:border-border'}`}
+                                                        key={v.color}
+                                                        onClick={() => selectColor(v.color)}
+                                                        title={v.name || v.color}
+                                                        className={`w-10 h-10 rounded-full border-2 transition-all ${activeColor.toLowerCase() === v.color.toLowerCase() ? 'border-foreground p-0.5' : 'border-transparent hover:border-border'}`}
                                                     >
-                                                        <div className={`w-full h-full rounded-full bg-${color.toLowerCase() === 'white' ? 'white border border-border' : color.toLowerCase() === 'black' ? 'black' : 'secondary'}`} style={{ backgroundColor: color.toLowerCase() }} />
+                                                        <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: v.color || '#e5e7eb' }} />
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
+                                        )}
 
                                         {/* Size */}
                                         <div>
@@ -174,19 +285,39 @@ export default function ProductDetailPage() {
                                                 </button>
                                             </div>
                                             <div className="grid grid-cols-5 gap-2">
-                                                {product.sizes.map((size) => (
+                                                {sizes.map((s) => {
+                                                    const out = s.stock <= 0;
+                                                    return (
                                                     <button
-                                                        key={size}
-                                                        onClick={() => setSelectedSize(size)}
-                                                        className={`py-3 rounded-lg text-xs font-bold transition-all border ${selectedSize === size
-                                                            ? 'bg-foreground text-background border-foreground'
-                                                            : 'border-border text-foreground hover:border-foreground/50 hover:bg-secondary/50'
-                                                            }`}
+                                                        key={s.size}
+                                                        onClick={() => !out && setSelectedSize(s.size)}
+                                                        disabled={out}
+                                                        title={out ? 'Sold out' : `${s.stock} in stock`}
+                                                        className={`py-3 rounded-lg text-xs font-bold transition-all border relative ${
+                                                            out
+                                                                ? 'border-border text-muted-foreground/40 line-through cursor-not-allowed bg-secondary/30'
+                                                                : selectedSize === s.size
+                                                                    ? 'bg-foreground text-background border-foreground'
+                                                                    : 'border-border text-foreground hover:border-foreground/50 hover:bg-secondary/50'
+                                                        }`}
                                                     >
-                                                        {size}
+                                                        {s.size}
                                                     </button>
-                                                ))}
+                                                    );
+                                                })}
+                                                {sizes.length === 0 && (
+                                                    <span className="col-span-5 text-xs text-muted-foreground">No sizes for this colour.</span>
+                                                )}
                                             </div>
+                                            {selectedSize && (
+                                                <p className={`text-xs mt-2 font-medium ${selectedSizeStock <= 0 ? 'text-destructive' : selectedSizeStock <= 5 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                                    {selectedSizeStock <= 0
+                                                        ? 'Sold out'
+                                                        : selectedSizeStock <= 5
+                                                            ? `Only ${selectedSizeStock} left!`
+                                                            : `In stock — ${selectedSizeStock} available`}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -207,19 +338,41 @@ export default function ProductDetailPage() {
                                                 <Plus size={16} />
                                             </button>
                                         </div>
-                                        <button className="flex-1 h-10 lg:h-12 flex items-center justify-center gap-2 lg:gap-3 bg-foreground text-background text-xs lg:text-sm tracking-[0.2em] uppercase font-bold rounded-xl hover:bg-foreground/90 transition-all shadow-lg shadow-foreground/20">
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={soldOut}
+                                            className={`flex-1 h-10 lg:h-12 flex items-center justify-center gap-2 lg:gap-3 text-xs lg:text-sm tracking-[0.2em] uppercase font-bold rounded-xl transition-all shadow-lg ${soldOut ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed shadow-none' : 'bg-foreground text-background hover:bg-foreground/90 shadow-foreground/20'}`}
+                                        >
                                             <ShoppingBag size={16} className="lg:w-[18px] lg:h-[18px]" />
-                                            Add to Cart
+                                            {soldOut ? 'Sold Out' : 'Add to Cart'}
                                         </button>
-                                        <button className="w-10 h-10 lg:w-14 lg:h-12 border border-border rounded-xl flex items-center justify-center hover:bg-secondary transition-colors group">
-                                            <Heart size={18} className="lg:w-5 lg:h-5 group-hover:fill-current transition-colors" />
+                                        <button
+                                            onClick={async () => {
+                                                const r = await toggleWishlist(product.id);
+                                                if (r === 'login') { openAuthModal(); toast.error('Please log in to save favourites'); }
+                                                else toast.success(r === 'added' ? 'Added to favourites ♡' : 'Removed from favourites');
+                                            }}
+                                            title="Save to favourites"
+                                            className="w-10 h-10 lg:w-14 lg:h-12 border border-border rounded-xl flex items-center justify-center hover:bg-secondary transition-colors group"
+                                        >
+                                            <Heart size={18} className={`lg:w-5 lg:h-5 transition-colors ${isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'group-hover:fill-current'}`} />
                                         </button>
                                     </div>
+
+                                    {soldOut && (
+                                        <button
+                                            onClick={notifyMe}
+                                            disabled={notifying || notified}
+                                            className={`w-full h-11 flex items-center justify-center gap-2 text-xs lg:text-sm tracking-[0.2em] uppercase font-bold rounded-xl border transition-colors ${notified ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-foreground text-foreground hover:bg-foreground hover:text-background'}`}
+                                        >
+                                            <Bell size={16} /> {notified ? "You'll be notified ✓" : 'Notify me when available'}
+                                        </button>
+                                    )}
 
                                     {/* Feature Badges */}
                                     <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
                                         {[
-                                            { icon: Truck, line1: "Free Shipping", line2: "On orders over ₹200" },
+                                            { icon: Truck, line1: "Free Shipping", line2: "On orders over ₹2,000" },
                                             { icon: Shield, line1: "Secure Checkout", line2: "SSL Encrypted" },
                                             { icon: RotateCcw, line1: "Free Returns", line2: "Within 30 days" },
                                         ].map((item, i) => (
@@ -238,43 +391,30 @@ export default function ProductDetailPage() {
                                     {/* Accordions */}
                                     <div className="space-y-2">
                                         <Accordion type="single" collapsible className="w-full">
+                                            {(product.detailsCare && product.detailsCare.length > 0) || product.description ? (
                                             <AccordionItem value="details">
                                                 <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Details & Care</AccordionTrigger>
                                                 <AccordionContent>
-                                                    <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-4 py-2">
-                                                        <li>Premium heavyweight cotton composition</li>
-                                                        <li>Relaxed, oversized fit for modern silhouette</li>
-                                                        <li>Ribbed crewneck collar</li>
-                                                        <li>Machine wash cold, tumble dry low</li>
-                                                        <li>Do not bleach</li>
-                                                    </ul>
+                                                    {product.detailsCare && product.detailsCare.length > 0 ? (
+                                                        <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-4 py-2">
+                                                            {product.detailsCare.map((d, i) => <li key={i}>{d}</li>)}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="text-sm text-muted-foreground py-2 leading-relaxed">{product.description}</p>
+                                                    )}
                                                 </AccordionContent>
                                             </AccordionItem>
+                                            ) : null}
                                             <AccordionItem value="shipping">
                                                 <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Shipping & Returns</AccordionTrigger>
                                                 <AccordionContent>
                                                     <div className="text-sm text-muted-foreground space-y-2 py-2">
-                                                        <p>Free standard shipping on all orders over ₹200. Orders are processed within 1-2 business days.</p>
-                                                        <p>We accept returns within 30 days of delivery. Items must be unworn and in original condition with tags attached.</p>
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                            <AccordionItem value="reviews">
-                                                <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Customer Reviews (124)</AccordionTrigger>
-                                                <AccordionContent>
-                                                    <div className="py-2 space-y-4">
-                                                        <div className="bg-secondary/30 p-4 rounded-lg">
-                                                            <div className="flex items-center gap-1 mb-2 text-foreground">
-                                                                <Star size={12} fill="currentColor" />
-                                                                <Star size={12} fill="currentColor" />
-                                                                <Star size={12} fill="currentColor" />
-                                                                <Star size={12} fill="currentColor" />
-                                                                <Star size={12} fill="currentColor" />
-                                                            </div>
-                                                            <h4 className="text-sm font-bold mb-1">Exceptional Quality</h4>
-                                                            <p className="text-xs text-muted-foreground leading-relaxed">"The fabric weight is perfect. It feels incredibly substantial without being too heavy. Definitely worth the price."</p>
-                                                            <p className="text-[10px] text-muted-foreground mt-2 font-medium">— Alex M.</p>
-                                                        </div>
+                                                        {product.shippingReturns && product.shippingReturns.trim()
+                                                            ? product.shippingReturns.split('\n').filter((l) => l.trim()).map((l, i) => <p key={i}>{l}</p>)
+                                                            : (<>
+                                                                <p>Free standard shipping on all orders over ₹2,000. Orders are processed within 1-2 business days.</p>
+                                                                <p>We accept returns within 30 days of delivery. Items must be unworn and in original condition with tags attached.</p>
+                                                              </>)}
                                                     </div>
                                                 </AccordionContent>
                                             </AccordionItem>
@@ -285,6 +425,11 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Reviews */}
+                <div className="container mx-auto px-4 lg:px-8 max-w-[1600px]">
+                    <ProductReviews productId={product.id} />
                 </div>
 
                 {/* Related */}

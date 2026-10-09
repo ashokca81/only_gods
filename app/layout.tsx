@@ -5,8 +5,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import BottomNav from '@/components/BottomNav';
 import AuthModal from '@/components/AuthModal';
+import AbandonedCartSync from '@/components/AbandonedCartSync';
 import ScrollToTop from '@/components/ScrollToTop';
+import AnnouncementBar from '@/components/AnnouncementBar';
 import { UIProvider } from '@/buffer/UIContext';
+import { CartProvider } from '@/buffer/CartContext';
+import { CustomerProvider } from '@/buffer/CustomerContext';
 import { QueryProvider } from './providers';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import '@/index.css';
@@ -89,14 +93,20 @@ export default function RootLayout({
                 >
                     <UIProvider>
                         <QueryProvider>
-                            <TooltipProvider>
-                                <ScrollToTop />
-                                <Toaster />
-                                <Sonner />
-                                {children}
-                                <BottomNav />
-                                <AuthModal />
-                            </TooltipProvider>
+                            <CartProvider>
+                              <CustomerProvider>
+                                <TooltipProvider>
+                                    <ScrollToTop />
+                                    <AnnouncementBar />
+                                    <Toaster />
+                                    <Sonner />
+                                    {children}
+                                    <BottomNav />
+                                    <AuthModal />
+                                    <AbandonedCartSync />
+                                </TooltipProvider>
+                              </CustomerProvider>
+                            </CartProvider>
                         </QueryProvider>
                     </UIProvider>
                 </ThemeProvider>

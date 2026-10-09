@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Hero from '@/components/Hero';
 import ProductGrid from '@/components/ProductGrid';
 import CategoryCard from '@/components/CategoryCard';
@@ -10,10 +11,43 @@ import Runway from '@/components/Runway';
 import Newsletter from '@/components/Newsletter';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { products, categories } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 
 export default function HomePage() {
+    const { data: products } = useProducts();
     const trending = products.filter((p) => p.trending);
+
+    // "The Collection" sticky-split section — dashboard-managed (left image + selected Categories).
+    const [stickyImage, setStickyImage] = useState('/runway-left.png');
+    const [categoriesList, setCategoriesList] = useState<{ name: string; image: string }[]>([]);
+    const [selectedNames, setSelectedNames] = useState<string[]>([]);
+
+    useEffect(() => {
+        let alive = true;
+        Promise.all([
+            fetch('/api/settings/home-collection').then((r) => r.json()).catch(() => null),
+            fetch('/api/settings/categories').then((r) => r.json()).catch(() => null),
+        ]).then(([hc, cat]) => {
+            if (!alive) return;
+            const home = hc?.homeCollection ?? {};
+            if (typeof home.stickyImage === 'string' && home.stickyImage) setStickyImage(home.stickyImage);
+            if (Array.isArray(home.titles)) setSelectedNames(home.titles);
+            if (Array.isArray(cat?.categories)) setCategoriesList(cat.categories);
+        });
+        return () => { alive = false; };
+    }, []);
+
+    const collectionCards = useMemo(() => {
+        const names = selectedNames.length ? selectedNames : categoriesList.map((c) => c.name);
+        const byName = new Map(categoriesList.map((c) => [c.name, c.image]));
+        return names
+            .map((name) => {
+                const inCat = products.filter((p) => p.category === name);
+                const image = byName.get(name) || inCat[0]?.image || '';
+                return { name, image, count: inCat.length, href: `/shop?category=${encodeURIComponent(name)}` };
+            })
+            .filter((c) => c.image);
+    }, [selectedNames, categoriesList, products]);
 
 
 
@@ -27,6 +61,7 @@ export default function HomePage() {
                 <Runway />
             </div>
 
+
             {/* Bento Grid Categories */}
             {/* The Collection - Sticky Split Layout */}
             <section className="hidden lg:block relative bg-white dark:bg-black border-b border-black/10 dark:border-white/10">
@@ -34,15 +69,15 @@ export default function HomePage() {
                     {/* Sticky Image (Left) */}
                     <div className="w-full lg:w-1/2 lg:sticky lg:top-0 h-[50vh] lg:h-screen border-r border-black/10 dark:border-white/10 relative overflow-hidden">
                         <img
-                            src="/runway-left.png"
+                            src={stickyImage}
                             alt="The Collection"
                             className="absolute inset-0 w-full h-full object-cover"
                         />
                     </div>
 
-                    {/* Scrollable Categories (Right) */}
+                    {/* Scrollable Collections (Right) */}
                     <div className="w-full lg:w-1/2 flex flex-col">
-                        {categories.map((cat, i) => (
+                        {collectionCards.map((cat, i) => (
                             <div key={cat.name} className="h-[60vh] lg:h-[80vh] w-full border-b border-black/10 dark:border-white/10 last:border-b-0 relative group">
                                 <CategoryCard
                                     {...cat}
@@ -225,32 +260,7 @@ export default function HomePage() {
             {/* Product Grid Section */}
             <ProductGrid />
 
-            {/* Newsletter Parallax or Bold Section */}
-            <section className="py-32 bg-black text-white dark:bg-white dark:text-black text-center px-4">
-                <div className="max-w-3xl mx-auto">
-                    <div className="h-12 md:h-16 flex justify-center mb-8">
-                        <img src="/logo_white.png" alt="Only Gods" className="h-full w-auto object-contain block dark:hidden" />
-                        <img src="/dark_logo.png" alt="Only Gods" className="h-full w-auto object-contain hidden dark:block" />
-                    </div>
-                    <h2 className="text-[6vw] sm:text-3xl md:text-4xl lg:text-6xl whitespace-nowrap font-black uppercase tracking-tight mb-6 font-display">
-                        Join the Club of Gods
-                    </h2>
-                    <p className="text-lg text-white/60 dark:text-black/60 mb-10">
-                        Sign up for exclusive access to drops, limited editions, and private sales.
-                    </p>
-                    <form className="flex flex-col sm:flex-row gap-4">
-                        <input
-                            type="email"
-                            placeholder="ENTER YOUR EMAIL"
-                            className="flex-1 bg-transparent border-b-2 border-white dark:border-black px-4 py-3 text-lg placeholder:text-white/40 dark:placeholder:text-black/40 focus:outline-none focus:border-white dark:focus:border-black transition-colors uppercase font-bold text-center sm:text-left"
-                        />
-                        <button className="bg-white text-black dark:bg-black dark:text-white px-10 py-4 text-xs font-bold uppercase tracking-[0.2em] hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors">
-                            Subscribe
-                        </button>
-                    </form>
-                </div>
-            </section>
-
+            {/* Newsletter section is global (rendered inside Footer). */}
             <Footer />
         </div>
     );

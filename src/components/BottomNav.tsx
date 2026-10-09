@@ -6,6 +6,8 @@ import { Home, LayoutGrid, Heart, ShoppingBag, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUI } from "@/buffer/UIContext";
+import { useCart } from "@/buffer/CartContext";
+import { useCustomer } from "@/buffer/CustomerContext";
 
 const tabs = [
   { icon: Home, label: "Home", path: "/" },
@@ -17,7 +19,11 @@ const tabs = [
 
 const BottomNav = () => {
   const { openAuthModal } = useUI();
+  const { count } = useCart();
+  const { customer, wishlistIds } = useCustomer();
+  const wishCount = wishlistIds.size;
   const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
     return pathname.startsWith(path);
@@ -37,7 +43,7 @@ const BottomNav = () => {
                 key={path}
                 href={path}
                 onClick={(e) => {
-                  if (path === "/profile") {
+                  if (path === "/profile" && !customer) {
                     e.preventDefault();
                     openAuthModal();
                   }
@@ -51,11 +57,23 @@ const BottomNav = () => {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <Icon
-                  size={22}
-                  strokeWidth={active ? 2.5 : 1.5}
-                  className={`transition-colors duration-200 mt-1 ${active ? "text-black dark:text-white" : "text-black/50 dark:text-white/50"}`}
-                />
+                <span className="relative mt-1">
+                  <Icon
+                    size={22}
+                    strokeWidth={active ? 2.5 : 1.5}
+                    className={`transition-colors duration-200 ${active ? "text-black dark:text-white" : "text-black/50 dark:text-white/50"}`}
+                  />
+                  {label === "Cart" && count > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-black dark:bg-white text-white dark:text-black text-[9px] font-bold flex items-center justify-center">
+                      {count}
+                    </span>
+                  )}
+                  {label === "Wishlist" && wishCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-black dark:bg-white text-white dark:text-black text-[9px] font-bold flex items-center justify-center">
+                      {wishCount}
+                    </span>
+                  )}
+                </span>
                 <span
                   className={`text-[10px] tracking-wide transition-colors duration-200 ${active ? "text-black dark:text-white font-bold" : "text-black/50 dark:text-white/50"
                     }`}

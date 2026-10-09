@@ -5,6 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Heart, ShoppingBag, User, Home, Layers, Info, Sun, Moon, Plus } from "lucide-react";
 import { useUI } from "@/buffer/UIContext";
+import { useCart } from "@/buffer/CartContext";
+import { useCustomer } from "@/buffer/CustomerContext";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchOverlay from "./SearchOverlay";
 import { useTheme } from "next-themes";
@@ -23,6 +26,10 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const { openAuthModal } = useUI();
+  const { count } = useCart();
+  const { customer, wishlistIds } = useCustomer();
+  const wishCount = wishlistIds.size;
+  const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === "/";
 
@@ -62,7 +69,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-500 ${bgClass}`}>
+      <header style={{ top: 'var(--annc-h, 0px)' }} className={`fixed left-0 right-0 z-50 border-b transition-all duration-500 ${bgClass}`}>
         <div className="container mx-auto px-4 lg:px-8">
           <div className={`flex items-center justify-between relative transition-all duration-500 ${scrolled ? 'h-12 lg:h-16' : 'h-16 lg:h-20'}`}>
 
@@ -153,19 +160,27 @@ const Navbar = () => {
                 </button>
               )}
 
-              <Link href="/wishlist" className="hidden lg:block hover:opacity-60 transition-opacity">
+              <Link href="/wishlist" className="hidden lg:block relative hover:opacity-60 transition-opacity">
                 <Heart size={18} />
+                {wishCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold">
+                    {wishCount}
+                  </span>
+                )}
               </Link>
               <Link href="/cart" className="hidden lg:block relative hover:opacity-60 transition-opacity">
                 <ShoppingBag size={18} />
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold">
-                  2
-                </span>
+                {count > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold">
+                    {count}
+                  </span>
+                )}
               </Link>
 
               <button
-                onClick={() => openAuthModal()}
+                onClick={() => (customer ? router.push('/profile') : openAuthModal())}
                 className="hidden lg:block hover:opacity-60 transition-opacity"
+                title={customer ? 'My account' : 'Login'}
               >
                 <User size={18} />
               </button>

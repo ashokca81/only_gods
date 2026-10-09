@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Scale typography & spacing up on large screens so the full-width layout
+   doesn't make text look tiny. All rem-based sizes grow proportionally. */
+@media (min-width: 1536px) { html { font-size: 18px; } }
+@media (min-width: 1920px) { html { font-size: 20px; } }
+@media (min-width: 2560px) { html { font-size: 22px; } }
+
 @layer base {
   :root {
     --background: 0 0% 100%;

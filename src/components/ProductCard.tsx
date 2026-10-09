@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Product } from "@/data/products";
+import { formatPrice } from "@/lib/format";
 
 interface ProductCardProps {
   product: Product;
@@ -17,11 +18,10 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const [direction, setDirection] = useState(0);
   const [animType, setAnimType] = useState<"slide" | "fade">("fade");
 
-  const productImages = [
-    product.image,
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1520975954732-57dd22299614?q=80&w=800&auto=format&fit=crop"
-  ];
+  const productImages =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image];
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -174,7 +174,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           </h3>
         </Link>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-sm font-semibold text-foreground">₹{product.price}</span>
+          <span className="text-sm font-semibold text-foreground">{formatPrice(product.price)}</span>
           {product.originalPrice && (
             <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
           )}

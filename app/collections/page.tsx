@@ -2,14 +2,34 @@ import { Metadata } from 'next';
 import CategoryCard from '@/components/CategoryCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { categories } from '@/data/products';
+import { getServerSupabase } from '@/lib/supabase/server';
+import { mergeCollections } from '@/lib/collections';
 
 export const metadata: Metadata = {
     title: 'Collections | ONLY GODS',
     description: 'Explore our exclusive collections of premium streetwear.',
 };
 
-export default function CollectionsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function CollectionsPage() {
+    const supabase = await getServerSupabase();
+
+    const [{ data: settingRow }, { data: products }] = await Promise.all([
+        supabase!.from('settings').select('value').eq('key', 'collections').single(),
+        supabase!.from('products').select('collections').eq('is_active', true),
+    ]);
+
+    const collections = mergeCollections(settingRow?.value);
+
+    // Live count of products tagged into each collection.
+    const counts = new Map<string, number>();
+    for (const p of products ?? []) {
+        for (const name of ((p as { collections: string[] | null }).collections ?? [])) {
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
@@ -24,18 +44,20 @@ export default function CollectionsPage() {
                             Collections
                         </h1>
                         <p className="text-sm lg:text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
-                            Discover our premium range of essential wear, crafted with precision and designed for the modern aesthetic.
+                            Seasonal edits and special drops — handpicked across every category.
                         </p>
                     </div>
 
-                    {/* Categories Grid */}
+                    {/* Collections Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-                        {categories.map((category, index) => (
+                        {collections.map((col, index) => (
                             <CategoryCard
-                                key={category.name}
-                                {...category}
+                                key={`${col.title}-${index}`}
+                                name={col.title}
+                                image={col.image}
+                                count={counts.get(col.title) ?? 0}
                                 index={index}
-                                href={`/shop?category=${category.name}`}
+                                href={`/shop?collection=${encodeURIComponent(col.title)}`}
                             />
                         ))}
                     </div>

@@ -1,49 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Minus, Plus, X, ArrowRight, ArrowLeft, ShoppingBag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { products } from '@/data/products';
+import Upsell from '@/components/Upsell';
+import { formatPrice } from '@/lib/format';
+import { useCart, cartKey } from '@/buffer/CartContext';
 
 export default function CartPage() {
-    // Mock Cart Data (Taking first 2 products for demo)
-    const [cartItems, setCartItems] = useState([
-        {
-            ...products[0],
-            quantity: 1,
-            selectedSize: 'L',
-            selectedColor: 'Black'
-        },
-        {
-            ...products[2],
-            quantity: 2,
-            selectedSize: 'M',
-            selectedColor: 'Charcoal'
-        }
-    ]);
-
-    const updateQuantity = (id: string, delta: number) => {
-        setCartItems(prev => prev.map(item => {
-            if (item.id === id) {
-                const newQty = Math.max(1, item.quantity + delta);
-                return { ...item, quantity: newQty };
-            }
-            return item;
-        }));
-    };
-
-    const removeItem = (id: string) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
-    };
-
-    const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const shipping = subtotal > 200 ? 0 : 20; // Free shipping over 200
+    const { items, updateQty, removeItem, subtotal, ready } = useCart();
+    const shipping = subtotal >= 2000 || subtotal === 0 ? 0 : 99;
     const total = subtotal + shipping;
 
-    if (cartItems.length === 0) {
+    if (ready && items.length === 0) {
         return (
             <div className="min-h-screen bg-background flex flex-col">
                 <Navbar />
@@ -52,7 +23,7 @@ export default function CartPage() {
                         <ShoppingBag size={32} className="text-muted-foreground" />
                     </div>
                     <h1 className="text-2xl lg:text-3xl font-bold font-display uppercase tracking-wider mb-2 text-center">Your Cart is Empty</h1>
-                    <p className="text-muted-foreground mb-8 text-center max-w-md">Looks like you haven't added anything yet.</p>
+                    <p className="text-muted-foreground mb-8 text-center max-w-md">Looks like you haven&apos;t added anything yet.</p>
                     <Link href="/shop" className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors">
                         Start Shopping
                     </Link>
@@ -72,7 +43,7 @@ export default function CartPage() {
 
                         <div className="flex items-end justify-between mb-10 lg:mb-16">
                             <h1 className="text-3xl lg:text-5xl font-black text-foreground font-display uppercase tracking-wide">
-                                Your Bag <span className="text-lg lg:text-2xl text-muted-foreground font-medium align-top ml-1">({cartItems.length})</span>
+                                Your Bag <span className="text-lg lg:text-2xl text-muted-foreground font-medium align-top ml-1">({items.length})</span>
                             </h1>
                             <Link href="/shop" className="hidden lg:inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] hover:text-muted-foreground transition-colors group">
                                 <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
@@ -83,17 +54,20 @@ export default function CartPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10 lg:gap-20">
                             {/* Cart Items List */}
                             <div className="space-y-6 lg:space-y-10">
-                                {cartItems.map((item) => (
+                                {items.map((item) => {
+                                    const key = cartKey(item);
+                                    return (
                                     <motion.div
                                         layout
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        key={`${item.id}-${item.selectedSize}`}
+                                        key={key}
                                         className="flex gap-4 lg:gap-8 border-b border-border pb-6 lg:pb-10 last:border-0"
                                     >
                                         {/* Image */}
                                         <Link href={`/product/${item.id}`} className="block w-24 lg:w-40 aspect-[3/4] rounded-xl overflow-hidden bg-secondary flex-shrink-0">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                         </Link>
 
@@ -101,48 +75,48 @@ export default function CartPage() {
                                         <div className="flex-1 flex flex-col">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">{item.category}</p>
                                                     <Link href={`/product/${item.id}`}>
                                                         <h3 className="text-base lg:text-xl font-bold font-display uppercase hover:text-muted-foreground transition-colors">{item.name}</h3>
                                                     </Link>
                                                 </div>
                                                 <button
-                                                    onClick={() => removeItem(item.id)}
+                                                    onClick={() => removeItem(key)}
                                                     className="text-muted-foreground hover:text-destructive transition-colors p-1"
                                                 >
                                                     <X size={18} />
                                                 </button>
                                             </div>
 
-                                            <p className="text-sm font-semibold mb-4">₹{item.price}</p>
+                                            <p className="text-sm font-semibold mb-4">{formatPrice(item.price)}</p>
 
                                             <div className="text-xs text-muted-foreground space-y-1 mb-auto">
-                                                <p>Size: <span className="text-foreground font-medium">{item.selectedSize}</span></p>
-                                                <p>Color: <span className="text-foreground font-medium">{item.selectedColor}</span></p>
+                                                {item.size && <p>Size: <span className="text-foreground font-medium">{item.size}</span></p>}
+                                                {item.color && <p>Color: <span className="text-foreground font-medium">{item.color}</span></p>}
                                             </div>
 
                                             {/* Quantity & Total for Item */}
                                             <div className="flex items-center justify-between mt-4">
                                                 <div className="inline-flex items-center border border-border rounded-lg h-9">
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, -1)}
+                                                        onClick={() => updateQty(key, item.quantity - 1)}
                                                         className="w-9 h-full flex items-center justify-center hover:bg-secondary transition-colors rounded-l-lg"
                                                     >
                                                         <Minus size={14} />
                                                     </button>
                                                     <span className="w-10 text-center text-xs font-bold">{item.quantity}</span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, 1)}
+                                                        onClick={() => updateQty(key, item.quantity + 1)}
                                                         className="w-9 h-full flex items-center justify-center hover:bg-secondary transition-colors rounded-r-lg"
                                                     >
                                                         <Plus size={14} />
                                                     </button>
                                                 </div>
-                                                <p className="text-sm font-bold">₹{item.price * item.quantity}</p>
+                                                <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>
                                             </div>
                                         </div>
                                     </motion.div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* Order Summary */}
@@ -153,49 +127,39 @@ export default function CartPage() {
                                     <div className="space-y-4 mb-8">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Subtotal</span>
-                                            <span className="font-medium">₹{subtotal}</span>
+                                            <span className="font-medium">{formatPrice(subtotal)}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Shipping</span>
-                                            <span className="font-medium">{shipping === 0 ? 'Free' : `₹${shipping}`}</span>
+                                            <span className="font-medium">{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                                         </div>
                                         <div className="border-t border-border pt-4 flex justify-between text-lg font-bold items-end">
                                             <span>Total</span>
                                             <div className="text-right">
                                                 <span className="block text-[10px] text-muted-foreground font-normal mb-1">Including Taxes</span>
-                                                <span>₹{total}</span>
+                                                <span>{formatPrice(total)}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mb-6">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Promo Code"
-                                                className="flex-1 bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors"
-                                            />
-                                            <button className="px-4 py-3 bg-secondary border border-border rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-foreground hover:text-background transition-colors">
-                                                Apply
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <button className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2 group">
+                                    <Link
+                                        href="/checkout"
+                                        className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2 group"
+                                    >
                                         Checkout
                                         <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                    </button>
+                                    </Link>
 
-                                    <div className="mt-6 flex items-center justify-center gap-3 text-muted-foreground opacity-60">
-                                        {/* Simple icons for cards */}
-                                        <div className="h-6 w-9 bg-foreground/10 rounded"></div>
-                                        <div className="h-6 w-9 bg-foreground/10 rounded"></div>
-                                        <div className="h-6 w-9 bg-foreground/10 rounded"></div>
-                                    </div>
-                                    <p className="text-[10px] text-center text-muted-foreground mt-4 uppercase tracking-wider">Secure Checkout</p>
+                                    <p className="text-[10px] text-center text-muted-foreground mt-4 uppercase tracking-wider">
+                                        Cash on Delivery available · Secure Checkout
+                                    </p>
                                 </div>
                             </div>
 
+                        </div>
+
+                        <div className="mt-4">
+                            <Upsell excludeIds={items.map((i) => i.id)} />
                         </div>
 
                     </div>
