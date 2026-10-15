@@ -74,7 +74,7 @@ export default function ShopPage() {
                 </section>
 
                 {/* Filters */}
-                <section className="border-b border-border sticky top-16 lg:top-20 bg-background/95 backdrop-blur-md z-30">
+                <section className="border-b border-border sticky top-12 lg:top-16 bg-background/95 backdrop-blur-md z-30">
                     <div className="container mx-auto px-4 lg:px-8">
                         <div className="flex items-center justify-between py-4 gap-4 overflow-x-auto">
                             <div className="flex items-center gap-2">

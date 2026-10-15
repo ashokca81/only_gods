@@ -23,6 +23,21 @@ const BottomNav = () => {
   const { customer, wishlistIds } = useCustomer();
   const wishCount = wishlistIds.size;
   const pathname = usePathname();
+
+  // Hide the bar while scrolling down, show it again when scrolling up.
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > last && y > 80) setHidden(true);
+      else if (y < last) setHidden(false);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   if (pathname.startsWith("/admin")) return null;
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -30,7 +45,7 @@ const BottomNav = () => {
   };
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-50 lg:hidden safe-bottom flex justify-center pointer-events-none px-4">
+    <div className={`fixed bottom-6 left-0 right-0 z-50 lg:hidden safe-bottom flex justify-center pointer-events-none px-4 transition-all duration-300 ${hidden ? 'translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'}`}>
       <nav
         className="bg-black/5 dark:bg-white/10 backdrop-blur-2xl border border-black/10 dark:border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(255,255,255,0.05)] rounded-[2rem] pointer-events-auto w-full max-w-[380px]"
         style={{ WebkitBackdropFilter: "blur(24px)" }}
