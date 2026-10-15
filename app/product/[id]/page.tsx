@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell } from 'lucide-react';
+import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -37,10 +37,25 @@ export default function ProductDetailPage() {
     const { customer, isWishlisted, toggleWishlist } = useCustomer();
     const { openAuthModal } = useUI();
     const [selectedImage, setSelectedImage] = useState(0);
-    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+    const [zoomIndex, setZoomIndex] = useState<number | null>(null);
     const [notified, setNotified] = useState(false);
     const [notifying, setNotifying] = useState(false);
     const flash = useFlash();
+    const imgCountRef = useRef(1);
+    const touchStartX = useRef<number | null>(null);
+
+    // Keyboard arrows / Escape while the full-screen zoom slider is open.
+    useEffect(() => {
+        if (zoomIndex === null) return;
+        const onKey = (e: KeyboardEvent) => {
+            const n = imgCountRef.current;
+            if (e.key === 'ArrowLeft') setZoomIndex((i) => (i === null ? i : (i - 1 + n) % n));
+            else if (e.key === 'ArrowRight') setZoomIndex((i) => (i === null ? i : (i + 1) % n));
+            else if (e.key === 'Escape') setZoomIndex(null);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [zoomIndex]);
 
     const scrollToImage = (index: number) => {
         const el = document.getElementById(`product-image-${index}`);
@@ -71,6 +86,9 @@ export default function ProductDetailPage() {
         activeVariant?.images && activeVariant.images.length > 0
             ? activeVariant.images
             : (product.images && product.images.length > 0 ? product.images : [product.image]);
+    imgCountRef.current = images.length;
+    const zoomPrev = () => setZoomIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length));
+    const zoomNext = () => setZoomIndex((i) => (i === null ? i : (i + 1) % images.length));
     const sizes = activeVariant?.sizes ?? [];
     const price = activeVariant ? activeVariant.price : product.price;
     const originalPrice = activeVariant ? activeVariant.original_price : (product.originalPrice ?? null);
@@ -192,7 +210,7 @@ export default function ProductDetailPage() {
                                                 />
                                                 {/* Zoom Button */}
                                                 <button
-                                                    onClick={() => setZoomedImage(img)}
+                                                    onClick={() => setZoomIndex(i)}
                                                     className="absolute top-4 right-4 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:text-black"
                                                 >
                                                     <Maximize2 size={20} />
@@ -459,22 +477,71 @@ export default function ProductDetailPage() {
             </main>
             <Footer />
 
-            {/* Zoom Overlay */}
+            {/* Zoom Slider Overlay */}
             {
-                zoomedImage && (
-                    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 lg:p-10" onClick={() => setZoomedImage(null)}>
+                zoomIndex !== null && (
+                    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 lg:p-10" onClick={() => setZoomIndex(null)}>
+                        {/* Close */}
                         <button
-                            onClick={() => setZoomedImage(null)}
-                            className="absolute top-6 right-6 lg:top-10 lg:right-10 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors"
+                            onClick={() => setZoomIndex(null)}
+                            className="absolute top-6 right-6 lg:top-10 lg:right-10 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors z-10"
                         >
                             <X size={24} />
                         </button>
+
+                        {/* Prev / Next */}
+                        {images.length > 1 && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); zoomPrev(); }}
+                                    className="absolute left-3 lg:left-10 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors z-10"
+                                    aria-label="Previous image"
+                                >
+                                    <ChevronLeft size={26} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); zoomNext(); }}
+                                    className="absolute right-3 lg:right-10 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors z-10"
+                                    aria-label="Next image"
+                                >
+                                    <ChevronRight size={26} />
+                                </button>
+                            </>
+                        )}
+
+                        {/* Image (swipeable) */}
                         <img
-                            src={zoomedImage}
-                            alt="Zoomed View"
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                            key={zoomIndex}
+                            src={images[zoomIndex]}
+                            alt={`${product.name} view ${zoomIndex + 1}`}
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none"
                             onClick={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+                            onTouchEnd={(e) => {
+                                if (touchStartX.current === null) return;
+                                const dx = e.changedTouches[0].clientX - touchStartX.current;
+                                touchStartX.current = null;
+                                if (dx > 40) zoomPrev();
+                                else if (dx < -40) zoomNext();
+                            }}
                         />
+
+                        {/* Dots + counter */}
+                        {images.length > 1 && (
+                            <div className="absolute bottom-6 lg:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-10" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex gap-2">
+                                    {images.map((_, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setZoomIndex(i)}
+                                            className={`h-2 rounded-full transition-all ${i === zoomIndex ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'}`}
+                                            aria-label={`Go to image ${i + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-white/70 text-xs tracking-widest">{zoomIndex + 1} / {images.length}</span>
+                            </div>
+                        )}
                     </div>
                 )
             }
