@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/format';
 import { createProduct, updateProduct, type ProductInput } from './actions';
 import type { Variant } from '@/lib/variants';
 import InfoCard from '../../_components/InfoCard';
+import ImageCropper from '@/components/admin/ImageCropper';
 
 const PALETTE = [
   '#000000', '#ffffff', '#64748b', '#1e293b', '#ef4444', '#f97316',
@@ -505,15 +506,19 @@ function VariantEditor({
   uploadFile: (f: File) => Promise<string | null>;
 }) {
   const [sizeInput, setSizeInput] = useState('');
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
 
-  const pickImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []); e.target.value = '';
-    const urls: string[] = [];
-    for (const file of files) {
-      const url = await uploadFile(file);
-      if (url) urls.push(url);
-    }
-    if (urls.length) onChange({ images: [...variant.images, ...urls] });
+  const pickImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/'));
+    e.target.value = '';
+    if (files.length) setCropQueue(files); // open the crop popup for each, one at a time
+  };
+
+  const onCropDone = async (blob: Blob) => {
+    const file = new File([blob], `product-${Date.now()}.webp`, { type: 'image/webp' });
+    const url = await uploadFile(file);
+    if (url) onChange({ images: [...variant.images, url] });
+    setCropQueue((q) => q.slice(1));
   };
   const addSize = (s: string) => {
     const v = s.trim(); if (!v) return;
@@ -566,6 +571,16 @@ function VariantEditor({
           <input type="file" accept="image/*" multiple className="hidden" onChange={pickImages} disabled={uploading} />
         </label>
       </div>
+
+      {cropQueue.length > 0 && (
+        <ImageCropper
+          file={cropQueue[0]}
+          uploading={uploading}
+          remaining={cropQueue.length}
+          onCancel={() => setCropQueue((q) => q.slice(1))}
+          onDone={onCropDone}
+        />
+      )}
 
       {/* sizes + stock */}
       <span className="block text-xs text-neutral-600 mb-1">{hideColor ? 'Sizes & stock' : 'Sizes & stock for this colour'}</span>
