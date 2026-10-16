@@ -1,13 +1,14 @@
 import Link from 'next/link';
-import { Image as ImageIcon, Film, Columns, LayoutGrid, Zap, Megaphone, ReceiptText, PanelBottom, FileText, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, Film, LayoutGrid, GalleryHorizontal, Grid2x2, Zap, Megaphone, ReceiptText, PanelBottom, FileText, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 const sections = [
   { href: '/admin/settings/hero', title: 'Hero', desc: 'Home top banner — image/video, title and button.', icon: ImageIcon },
   { href: '/admin/settings/runway', title: 'Runway (The Season)', desc: 'The big scrolling gallery — pick which collections show.', icon: Film },
-  { href: '/admin/settings/collection-section', title: '“The Collection” section', desc: 'The split-screen block — left image + chosen categories.', icon: Columns },
+  { href: '/admin/settings/carousel', title: 'Home carousel', desc: 'Full-screen slides (desktop) / swipe cards (mobile), linked to categories.', icon: GalleryHorizontal },
   { href: '/admin/settings/home-products', title: 'Home products', desc: 'Pick the products shown in the home grid (up to 8).', icon: LayoutGrid },
+  { href: '/admin/settings/mobile-grid', title: 'Mobile grid', desc: '2×2 products above the carousel — mobile only (up to 4).', icon: Grid2x2 },
   { href: '/admin/settings/footer', title: 'Footer', desc: 'All footer text and links — logo, columns, socials, legal.', icon: PanelBottom },
   { href: '/admin/settings/pages', title: 'Pages', desc: 'Edit About, Events, FAQ, Terms, Privacy, Cookies content.', icon: FileText },
   { href: '/admin/settings/flash', title: 'Flash sale', desc: 'Store-wide timed discount with a countdown bar.', icon: Zap },

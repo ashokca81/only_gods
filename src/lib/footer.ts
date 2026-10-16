@@ -57,7 +57,7 @@ export const DEFAULT_FOOTER: FooterConfig = {
   facebook: '#',
   instagram: '#',
   twitter: '#',
-  newsletterHeading: 'Stay in the know with Only Gods:',
+  newsletterHeading: 'Join the Club of Gods',
   legalLinks: [
     { label: 'Terms & Conditions', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },

@@ -40,13 +40,16 @@ function Media({
 
 const Hero = () => {
   const [hero, setHero] = useState<HeroConfig>(DEFAULT_HERO);
+  // Don't render any hero media until the real setting is loaded — avoids the
+  // default (placeholder) media flashing for a moment on first paint.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let alive = true;
     fetch('/api/settings/hero')
       .then((r) => r.json())
-      .then((j) => { if (alive && j?.hero) setHero(j.hero as HeroConfig); })
-      .catch(() => { /* keep defaults */ });
+      .then((j) => { if (alive) { if (j?.hero) setHero(j.hero as HeroConfig); setReady(true); } })
+      .catch(() => { if (alive) setReady(true); });
     return () => { alive = false; };
   }, []);
 
@@ -55,20 +58,24 @@ const Hero = () => {
 
       {/* Background Video/Image */}
       <div className="absolute inset-0 z-0">
-        {/* Mobile */}
-        <Media
-          type={hero.mobileType}
-          url={hero.mobileUrl}
-          poster={hero.mobilePoster}
-          className="md:hidden w-full h-full object-cover opacity-60 scale-105"
-        />
-        {/* Desktop */}
-        <Media
-          type={hero.desktopType}
-          url={hero.desktopUrl}
-          poster={hero.desktopPoster}
-          className="hidden md:block w-full h-full object-cover opacity-60 scale-105"
-        />
+        {ready && (
+          <>
+            {/* Mobile */}
+            <Media
+              type={hero.mobileType}
+              url={hero.mobileUrl}
+              poster={hero.mobilePoster}
+              className="md:hidden w-full h-full object-cover opacity-60 scale-105"
+            />
+            {/* Desktop */}
+            <Media
+              type={hero.desktopType}
+              url={hero.desktopUrl}
+              poster={hero.desktopPoster}
+              className="hidden md:block w-full h-full object-cover opacity-60 scale-105"
+            />
+          </>
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90" />
       </div>
 

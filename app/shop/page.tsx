@@ -32,6 +32,22 @@ export default function ShopPage() {
         if (col) setCollection(col);
     }, []);
 
+    // Filter bar: hide while scrolling down, show again when scrolling up.
+    const [filterHidden, setFilterHidden] = useState(false);
+    useEffect(() => {
+        let last = window.scrollY;
+        const onScroll = () => {
+            const y = window.scrollY;
+            if (y <= 4) setFilterHidden(false);           // at the very top -> shown
+            else if (y > last + 3) setFilterHidden(true);  // scrolling down -> hide
+            else if (y < last - 3) setFilterHidden(false); // scrolling up -> show
+            last = y;
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
     const filtered = useMemo(() => {
         let items = products;
         // Collection is an independent season-wise filter (mixes all categories).
@@ -74,7 +90,7 @@ export default function ShopPage() {
                 </section>
 
                 {/* Filters */}
-                <section className="border-b border-border sticky top-12 lg:top-16 bg-background/95 backdrop-blur-md z-30">
+                <section className={`border-b border-border lg:sticky lg:top-16 bg-background/95 backdrop-blur-md z-30 lg:transition-all lg:duration-300 lg:ease-out ${filterHidden ? 'lg:-translate-y-full lg:opacity-0 lg:pointer-events-none' : 'lg:translate-y-0 lg:opacity-100'}`}>
                     <div className="container mx-auto px-4 lg:px-8">
                         <div className="flex items-center justify-between py-4 gap-4 overflow-x-auto">
                             <div className="flex items-center gap-2">
