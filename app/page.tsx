@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import Hero from '@/components/Hero';
 import ProductGrid from '@/components/ProductGrid';
-import CategoryCard from '@/components/CategoryCard';
 import Runway from '@/components/Runway';
+import CollectionCarousel from '@/components/CollectionCarousel';
+import MobileProductGrid from '@/components/MobileProductGrid';
 import Newsletter from '@/components/Newsletter';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -16,40 +16,6 @@ import { useProducts } from '@/hooks/useProducts';
 export default function HomePage() {
     const { data: products } = useProducts();
     const trending = products.filter((p) => p.trending);
-
-    // "The Collection" sticky-split section — dashboard-managed (left image + selected Categories).
-    const [stickyImage, setStickyImage] = useState('/runway-left.png');
-    const [categoriesList, setCategoriesList] = useState<{ name: string; image: string }[]>([]);
-    const [selectedNames, setSelectedNames] = useState<string[]>([]);
-
-    useEffect(() => {
-        let alive = true;
-        Promise.all([
-            fetch('/api/settings/home-collection').then((r) => r.json()).catch(() => null),
-            fetch('/api/settings/categories').then((r) => r.json()).catch(() => null),
-        ]).then(([hc, cat]) => {
-            if (!alive) return;
-            const home = hc?.homeCollection ?? {};
-            if (typeof home.stickyImage === 'string' && home.stickyImage) setStickyImage(home.stickyImage);
-            if (Array.isArray(home.titles)) setSelectedNames(home.titles);
-            if (Array.isArray(cat?.categories)) setCategoriesList(cat.categories);
-        });
-        return () => { alive = false; };
-    }, []);
-
-    const collectionCards = useMemo(() => {
-        const names = selectedNames.length ? selectedNames : categoriesList.map((c) => c.name);
-        const byName = new Map(categoriesList.map((c) => [c.name, c.image]));
-        return names
-            .map((name) => {
-                const inCat = products.filter((p) => p.category === name);
-                const image = byName.get(name) || inCat[0]?.image || '';
-                return { name, image, count: inCat.length, href: `/shop?category=${encodeURIComponent(name)}` };
-            })
-            .filter((c) => c.image);
-    }, [selectedNames, categoriesList, products]);
-
-
 
     return (
         <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-20 lg:pb-0 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
@@ -62,70 +28,17 @@ export default function HomePage() {
             </div>
 
 
-            {/* Bento Grid Categories */}
-            {/* The Collection - Sticky Split Layout */}
-            <section className="hidden lg:block relative bg-white dark:bg-black border-b border-black/10 dark:border-white/10">
-                <div className="flex flex-col lg:flex-row">
-                    {/* Sticky Image (Left) */}
-                    <div className="w-full lg:w-1/2 lg:sticky lg:top-0 h-[50vh] lg:h-screen border-r border-black/10 dark:border-white/10 relative overflow-hidden">
-                        <img
-                            src={stickyImage}
-                            alt="The Collection"
-                            className="absolute inset-0 w-full h-full object-cover"
-                        />
-                    </div>
+            {/* Mobile-only 2x2 product grid above the carousel */}
+            <MobileProductGrid />
 
-                    {/* Scrollable Collections (Right) */}
-                    <div className="w-full lg:w-1/2 flex flex-col">
-                        {collectionCards.map((cat, i) => (
-                            <div key={cat.name} className="h-[60vh] lg:h-[80vh] w-full border-b border-black/10 dark:border-white/10 last:border-b-0 relative group">
-                                <CategoryCard
-                                    {...cat}
-                                    index={i}
-                                    className="h-full w-full"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            {/* Collection carousel (replaces the old split layout) */}
+            <CollectionCarousel />
 
             {/* Editorial / Trending */}
             <section className="lg:hidden pt-12 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black">
                 <div className="container mx-auto px-4 lg:px-8">
                     {/* Section Header */}
                     <div className="mb-2 lg:mb-20">
-                        {/* Mobile Layout */}
-                        <div className="flex flex-col lg:hidden w-full gap-2">
-                            <motion.p
-                                initial={{ opacity: 0, x: -20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                className="text-[10px] font-bold tracking-[0.3em] uppercase text-red-500 mb-1 flex items-center gap-2"
-                            >
-                                <span className="w-6 h-[2px] bg-red-500 inline-block" />
-                                Trending Now
-                            </motion.p>
-                            
-                            <div className="flex flex-row justify-between items-center w-full">
-                                <motion.h2
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    className="text-[2rem] leading-none sm:text-4xl font-black uppercase tracking-tighter font-display"
-                                >
-                                    What&apos;s Hot
-                                </motion.h2>
-                                <Link href="/shop" className="group shrink-0 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-black dark:hover:text-black dark:hover:bg-white transition-all duration-300 border border-black/30 dark:border-white/30 px-3 py-2 w-auto">
-                                    View All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                            </div>
-                            
-                            <span className="block text-xs text-black/50 dark:text-white/40 mt-1 max-w-[80%] leading-relaxed">
-                                The pieces everyone&apos;s talking about this season.
-                            </span>
-                        </div>
-
                         {/* Desktop Layout */}
                         <div className="hidden lg:flex flex-row justify-between items-end gap-8">
                             <div>
@@ -155,11 +68,6 @@ export default function HomePage() {
                             </Link>
                         </div>
                         <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 mt-3 lg:mt-14" />
-                    </div>
-
-                    {/* Mobile Runway (hidden on desktop) */}
-                    <div className="lg:hidden mb-4 mt-2 -mx-4">
-                        <Runway />
                     </div>
 
                     {/* Magazine Grid */}

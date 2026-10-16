@@ -1,12 +1,15 @@
 'use client';
 
 import Link from "next/link";
-import { Bookmark, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bookmark, Plus } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProducts } from "@/hooks/useProducts";
 import { useHomeProducts } from "@/hooks/useHomeProducts";
 import { formatPrice } from "@/lib/format";
+import { useCustomer } from "@/buffer/CustomerContext";
+import { useUI } from "@/buffer/UIContext";
+import { toast } from "sonner";
 
 interface GridItem {
   id: string;
@@ -18,23 +21,18 @@ interface GridItem {
 
 const ProductCard = ({ product }: { product: GridItem }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const [direction] = useState(0);
   const [animType, setAnimType] = useState<"slide" | "fade">("fade");
+  const { isWishlisted, toggleWishlist } = useCustomer();
+  const { openAuthModal } = useUI();
+  const wished = isWishlisted(product.id);
 
-  const nextImage = (e: React.MouseEvent) => {
+  const onWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setAnimType("slide");
-    setDirection(1);
-    setCurrentIndex((prev) => (prev + 1) % product.images.length);
-  };
-
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setAnimType("slide");
-    setDirection(-1);
-    setCurrentIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
+    const r = await toggleWishlist(product.id);
+    if (r === "login") { openAuthModal(); toast.error("Please log in to save favourites"); }
+    else toast.success(r === "added" ? "Added to favourites ♡" : "Removed from favourites");
   };
 
   const handleMouseEnter = () => {
@@ -83,44 +81,19 @@ const ProductCard = ({ product }: { product: GridItem }) => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Carousel Navigation Arrows */}
-        {product.images.length > 1 && (
-          <div className="absolute inset-0 flex items-center justify-between px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-            <button
-              onClick={prevImage}
-              className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
-            >
-              <ChevronLeft size={20} className="text-white drop-shadow-md" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
-            >
-              <ChevronRight size={20} className="text-white drop-shadow-md" />
-            </button>
-          </div>
-        )}
+        {/* Wishlist ribbon — frosted glass + auto-contrast (white on dark photos, black on light) */}
+        <button
+          type="button"
+          onClick={onWishlist}
+          aria-label={wished ? "Remove from favourites" : "Add to favourites"}
+          className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-3xl bg-white/15 shadow-lg hover:bg-white/25 transition-colors"
+          style={{ WebkitBackdropFilter: "blur(24px)" }}
+        >
+          {/* border + icon invert against the photo behind for contrast on any colour */}
+          <span className="absolute inset-0 rounded-full border-2 border-white mix-blend-difference pointer-events-none" />
+          <Bookmark size={16} className="relative mix-blend-difference text-white" fill={wished ? "white" : "none"} />
+        </button>
 
-        {/* Bookmark Icon */}
-        {product.hasBookmark && (
-          <div className="absolute top-3 right-3 text-white drop-shadow-md">
-            <Bookmark size={20} fill="white" className="opacity-90" />
-          </div>
-        )}
-
-        {/* Pagination Dots */}
-        {product.images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            {product.images.map((_, idx) => (
-              <div
-                key={idx}
-                className={`w-1.5 h-1.5 rounded-full drop-shadow-md transition-all duration-300 ${
-                  idx === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Product Info */}

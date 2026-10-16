@@ -21,11 +21,13 @@ export const DEFAULT_HERO: HeroConfig = {
   subtitle: '',
   cta: 'Shop Now',
   ctaLink: '/shop',
-  desktopType: 'video',
-  desktopUrl: 'https://videos.pexels.com/video-files/10330518/10330518-uhd_2560_1440_25fps.mp4',
+  // Default is a static image (never an autoplay video) so nothing plays
+  // before the admin's hero setting loads.
+  desktopType: 'image',
+  desktopUrl: 'https://images.unsplash.com/photo-1523396896303-1e8ee5006752?q=80&w=2940&auto=format&fit=crop',
   desktopPoster: 'https://images.unsplash.com/photo-1523396896303-1e8ee5006752?q=80&w=2940&auto=format&fit=crop',
-  mobileType: 'video',
-  mobileUrl: 'https://videos.pexels.com/video-files/6615627/6615627-uhd_1440_2732_25fps.mp4',
+  mobileType: 'image',
+  mobileUrl: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
   mobilePoster: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
 };
 
