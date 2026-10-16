@@ -20,7 +20,7 @@ export default function MobileProductGrid() {
     <section className="lg:hidden px-4 pt-6 pb-2">
       <div className="grid grid-cols-2 gap-3">
         {picked.map((p, i) => (
-          <ProductCard key={p.id} product={p} index={i} />
+          <ProductCard key={p.id} product={p} index={i} hideCarousel />
         ))}
       </div>
     </section>

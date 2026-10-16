@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Loader2, Phone } from 'lucide-react';
+import { ShoppingBag, Loader2, Phone, FileCheck2, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
+import { DEFAULT_COD_TERMS, type CodTermsConfig } from '@/lib/codTerms';
 import { useCart } from '@/buffer/CartContext';
 import { useCustomer } from '@/buffer/CustomerContext';
 import { useUI } from '@/buffer/UIContext';
@@ -25,6 +26,17 @@ const empty: Form = {
   name: '', phone: '', email: '', address: '', city: '', state: '', pincode: '',
 };
 
+interface SavedAddress {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  line: string;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  is_default: boolean;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotal, clear, ready } = useCart();
@@ -34,6 +46,20 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState<'cod' | 'online'>('cod');
+
+  // Saved addresses (like Amazon/Flipkart)
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [saveAddr, setSaveAddr] = useState(true);
+  const [makeDefault, setMakeDefault] = useState(false);
+
+  // Cash-on-Delivery Terms gate (content is dashboard-managed)
+  const [codTerms, setCodTerms] = useState<CodTermsConfig>(DEFAULT_COD_TERMS);
+  const [showTnc, setShowTnc] = useState(false);       // the accept step before a COD order
+  const [acceptTnc, setAcceptTnc] = useState(false);   // the checkbox
+  const [showTncInfo, setShowTncInfo] = useState(false); // the info popup card
 
   // Coupon
   const [couponInput, setCouponInput] = useState('');
@@ -74,6 +100,45 @@ export default function CheckoutPage() {
   const removeCoupon = () => { setCoupon(null); setCouponInput(''); setCouponMsg(null); };
   const set = (k: keyof Form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Fill the checkout form from a saved address (maps `line` → `address`).
+  const fillFromAddress = (a: SavedAddress) => {
+    setForm((f) => ({
+      ...f,
+      name: a.name || f.name,
+      phone: a.phone || f.phone,
+      address: a.line || '',
+      city: a.city || '',
+      state: a.state || '',
+      pincode: a.pincode || '',
+    }));
+  };
+
+  const selectAddr = (a: SavedAddress) => {
+    setSelectedAddrId(a.id);
+    setShowNewForm(false);
+    setPicking(false);
+    fillFromAddress(a);
+  };
+
+  const startNewAddr = () => {
+    setSelectedAddrId(null);
+    setShowNewForm(true);
+    setPicking(false);
+    setSaveAddr(true);
+    setMakeDefault(false);
+    setForm((f) => ({ ...empty, name: customer?.name || '', phone: customer?.phone || '', email: f.email }));
+  };
+
+  // Load the dashboard-managed COD Terms text once.
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/settings/cod-terms')
+      .then((r) => r.json())
+      .then((j) => { if (alive && j?.codTerms) setCodTerms(j.codTerms as CodTermsConfig); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   // Prefill name & phone from the logged-in customer.
   useEffect(() => {
     if (customer) {
@@ -83,6 +148,29 @@ export default function CheckoutPage() {
         phone: f.phone || customer.phone || '',
       }));
     }
+  }, [customer]);
+
+  // Load the customer's saved addresses; pre-select the default and auto-fill.
+  useEffect(() => {
+    if (!customer) return;
+    let alive = true;
+    fetch('/api/account/addresses')
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive) return;
+        const list: SavedAddress[] = Array.isArray(j?.addresses) ? j.addresses : [];
+        setAddresses(list);
+        if (list.length > 0) {
+          const def = list.find((a) => a.is_default) || list[0];
+          setSelectedAddrId(def.id);
+          setShowNewForm(false);
+          fillFromAddress(def);
+        } else {
+          setShowNewForm(true);
+        }
+      })
+      .catch(() => setShowNewForm(true));
+    return () => { alive = false; };
   }, [customer]);
 
   if (ready && items.length === 0) {
@@ -191,13 +279,22 @@ export default function CheckoutPage() {
     return true; // modal opened; its handlers manage the placing state
   };
 
-  const placeOrder = async () => {
-    setError(null);
-    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      setError('Please fill name, phone and address.');
-      return;
-    }
+  // Actually place the order (after validation / COD terms are accepted).
+  const doPlace = async () => {
     setPlacing(true);
+    // Save a newly-typed address to the account (non-fatal if it fails).
+    if (showNewForm && saveAddr) {
+      try {
+        await fetch('/api/account/addresses', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name.trim(), phone: form.phone.trim(), line: form.address.trim(),
+            city: form.city.trim(), state: form.state.trim(), pincode: form.pincode.trim(),
+            is_default: makeDefault,
+          }),
+        });
+      } catch { /* ignore — don't block the order */ }
+    }
     if (payMethod === 'online') {
       const opened = await payOnline();
       if (!opened) setPlacing(false);
@@ -205,6 +302,27 @@ export default function CheckoutPage() {
       await placeCOD();
       setPlacing(false);
     }
+  };
+
+  const placeOrder = async () => {
+    setError(null);
+    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
+      setError('Please fill name, phone and address.');
+      return;
+    }
+    // Cash on Delivery must accept the Terms & Conditions first.
+    if (payMethod === 'cod') {
+      setShowTnc(true);
+      return;
+    }
+    await doPlace();
+  };
+
+  // Confirm from the COD Terms dialog — only when the box is ticked.
+  const confirmCod = async () => {
+    if (!acceptTnc) return;
+    setShowTnc(false);
+    await doPlace();
   };
 
   return (
@@ -218,20 +336,105 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-16">
               {/* Shipping details */}
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-[0.2em] mb-5">Shipping Details</h2>
-                <div className="space-y-4">
-                  <Input label="Full name *" value={form.name} onChange={(v) => set('name', v)} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input label="Phone *" value={form.phone} onChange={(v) => set('phone', v)} type="tel" />
-                    <Input label="Email (optional)" value={form.email} onChange={(v) => set('email', v)} type="email" />
-                  </div>
-                  <Input label="Address *" value={form.address} onChange={(v) => set('address', v)} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input label="City" value={form.city} onChange={(v) => set('city', v)} />
-                    <Input label="State" value={form.state} onChange={(v) => set('state', v)} />
-                  </div>
-                  <Input label="Pincode" value={form.pincode} onChange={(v) => set('pincode', v)} />
-                </div>
+                {/* Saved addresses — show the chosen one; "Change" opens the full list */}
+                {addresses.length > 0 && !showNewForm && (() => {
+                  const selectedAddr = addresses.find((a) => a.id === selectedAddrId) || null;
+
+                  // Collapsed: just the selected address with a "Change" link.
+                  if (!picking && selectedAddr) {
+                    return (
+                      <div className="mb-8">
+                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] mb-3">Deliver to</h2>
+                        <div className="relative rounded-xl border border-foreground bg-secondary/40 p-4">
+                          <button
+                            type="button"
+                            onClick={() => setPicking(true)}
+                            className="absolute top-3 right-4 text-xs font-bold uppercase tracking-wider text-blue-600 hover:underline"
+                          >
+                            Change
+                          </button>
+                          <p className="text-sm font-semibold flex items-center gap-2 pr-16">
+                            {selectedAddr.name || 'Address'}
+                            {selectedAddr.is_default && (
+                              <span className="text-[9px] uppercase tracking-wider bg-foreground text-background px-1.5 py-0.5 rounded-[4px]">Default</span>
+                            )}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">{[selectedAddr.line, selectedAddr.city, selectedAddr.state, selectedAddr.pincode].filter(Boolean).join(', ')}</p>
+                          {selectedAddr.phone && <p className="text-sm text-muted-foreground mt-0.5">Phone: {selectedAddr.phone}</p>}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Expanded: full list to pick from + add new.
+                  return (
+                    <div className="mb-8">
+                      <h2 className="text-sm font-bold uppercase tracking-[0.2em] mb-3">Select a delivery address</h2>
+                      <div className="space-y-2.5">
+                        {addresses.map((a) => {
+                          const active = selectedAddrId === a.id;
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => selectAddr(a)}
+                              className={`w-full text-left rounded-xl border p-4 flex items-start gap-3 transition-colors ${active ? 'border-foreground bg-secondary/40' : 'border-border hover:border-foreground/40'}`}
+                            >
+                              <span className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${active ? 'border-foreground' : 'border-muted-foreground/40'}`}>
+                                {active && <span className="w-2 h-2 rounded-full bg-foreground" />}
+                              </span>
+                              <div className="flex-1 min-w-0 text-sm">
+                                <p className="font-semibold flex items-center gap-2">
+                                  {a.name || 'Address'}
+                                  {a.is_default && (
+                                    <span className="text-[9px] uppercase tracking-wider bg-foreground text-background px-1.5 py-0.5 rounded-[4px]">Default</span>
+                                  )}
+                                </p>
+                                <p className="text-muted-foreground">{[a.line, a.city, a.state, a.pincode].filter(Boolean).join(', ')}</p>
+                                {a.phone && <p className="text-muted-foreground text-xs mt-0.5">Phone: {a.phone}</p>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button type="button" onClick={startNewAddr} className="mt-3 text-sm font-semibold underline underline-offset-4 hover:text-foreground/70">
+                        + Add a new address
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* New / manual address form */}
+                {(addresses.length === 0 || showNewForm) && (
+                  <>
+                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] mb-5">
+                      {addresses.length > 0 ? 'New address' : 'Shipping Details'}
+                    </h2>
+                    <div className="space-y-4">
+                      <Input label="Full name *" value={form.name} onChange={(v) => set('name', v)} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input label="Phone *" value={form.phone} onChange={(v) => set('phone', v)} type="tel" />
+                        <Input label="Email (optional)" value={form.email} onChange={(v) => set('email', v)} type="email" />
+                      </div>
+                      <Input label="Address *" value={form.address} onChange={(v) => set('address', v)} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input label="City" value={form.city} onChange={(v) => set('city', v)} />
+                        <Input label="State" value={form.state} onChange={(v) => set('state', v)} />
+                      </div>
+                      <Input label="Pincode" value={form.pincode} onChange={(v) => set('pincode', v)} />
+                    </div>
+                    <label className="flex items-center gap-2 mt-4 text-sm cursor-pointer select-none">
+                      <input type="checkbox" checked={saveAddr} onChange={(e) => setSaveAddr(e.target.checked)} className="h-4 w-4" />
+                      Save this address to my account
+                    </label>
+                    {saveAddr && (
+                      <label className="flex items-center gap-2 mt-2 text-sm cursor-pointer select-none">
+                        <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-4 w-4" />
+                        Set as default address
+                      </label>
+                    )}
+                  </>
+                )}
 
                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] mt-8 mb-3">Payment</h2>
                 <div className="flex items-center gap-3 rounded-xl border border-foreground bg-secondary/30 p-4">
@@ -338,6 +541,53 @@ export default function CheckoutPage() {
         </section>
       </main>
       <Footer />
+
+      {/* COD Terms accept dialog */}
+      {showTnc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !placing && setShowTnc(false)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative w-full max-w-md bg-background rounded-2xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowTnc(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center mb-4"><FileCheck2 size={20} /></div>
+            <h3 className="text-lg font-bold font-display uppercase tracking-wide mb-1">Pay on Delivery</h3>
+            <p className="text-sm text-muted-foreground mb-5">Please accept the terms to place your Cash on Delivery order.</p>
+
+            <label className="flex items-start gap-3 cursor-pointer select-none mb-5">
+              <input type="checkbox" checked={acceptTnc} onChange={(e) => setAcceptTnc(e.target.checked)} className="h-4 w-4 mt-0.5" />
+              <span className="text-sm">
+                I accept the{' '}
+                <button type="button" onClick={(e) => { e.preventDefault(); setShowTncInfo(true); }} className="font-semibold text-blue-600 underline underline-offset-2">
+                  Terms &amp; Conditions
+                </button>
+              </span>
+            </label>
+
+            <button
+              onClick={confirmCod}
+              disabled={!acceptTnc || placing}
+              className="w-full py-3.5 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {placing && <Loader2 size={16} className="animate-spin" />}
+              {placing ? 'Processing…' : 'Confirm order'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* COD Terms info popup (dashboard-managed content) */}
+      {showTncInfo && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setShowTncInfo(false)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative w-full max-w-lg bg-background rounded-2xl border border-border p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowTncInfo(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            <h3 className="text-base font-bold pr-8 mb-3">{codTerms.title}</h3>
+            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{codTerms.body}</p>
+            <button onClick={() => setShowTncInfo(false)} className="mt-5 w-full py-3 bg-foreground text-background text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-foreground/90">
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,9 +10,10 @@ import { formatPrice } from "@/lib/format";
 interface ProductCardProps {
   product: Product;
   index?: number;
+  hideCarousel?: boolean;
 }
 
-const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
+const ProductCard = ({ product, index = 0, hideCarousel = false }: ProductCardProps) => {
   const [liked, setLiked] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -89,32 +90,23 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           </AnimatePresence>
 
           {/* Carousel Navigation Arrows */}
-          <div className="absolute inset-0 flex items-center justify-between px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-            <button 
-              onClick={prevImage}
-              className="w-8 h-8 rounded-full bg-black/20 dark:bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 dark:hover:bg-white/40 transition-colors pointer-events-auto"
-            >
-              <ChevronLeft size={20} className="text-white drop-shadow-md" />
-            </button>
-            <button 
-              onClick={nextImage}
-              className="w-8 h-8 rounded-full bg-black/20 dark:bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 dark:hover:bg-white/40 transition-colors pointer-events-auto"
-            >
-              <ChevronRight size={20} className="text-white drop-shadow-md" />
-            </button>
-          </div>
+          {!hideCarousel && (
+            <div className="absolute inset-0 flex items-center justify-between px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+              <button
+                onClick={prevImage}
+                className="w-8 h-8 rounded-full bg-black/20 dark:bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 dark:hover:bg-white/40 transition-colors pointer-events-auto"
+              >
+                <ChevronLeft size={20} className="text-white drop-shadow-md" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="w-8 h-8 rounded-full bg-black/20 dark:bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 dark:hover:bg-white/40 transition-colors pointer-events-auto"
+              >
+                <ChevronRight size={20} className="text-white drop-shadow-md" />
+              </button>
+            </div>
+          )}
 
-          {/* Pagination Dots */}
-          <div className="absolute bottom-[4.5rem] left-1/2 -translate-x-1/2 flex gap-1.5 z-20 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-            {productImages.map((_, idx) => (
-              <div 
-                key={idx} 
-                className={`w-1.5 h-1.5 rounded-full drop-shadow-md transition-all duration-300 ${
-                  idx === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
-                }`} 
-              />
-            ))}
-          </div>
 
           {/* Overlay */}
           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-all duration-500" />

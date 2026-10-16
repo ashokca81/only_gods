@@ -100,7 +100,7 @@ export default function CollectionCarousel() {
                 href={slideHref(s)}
                 style={style}
                 aria-hidden={off !== 0}
-                className="absolute left-1/2 top-0 w-[74vw] h-full rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 transition-all duration-500 ease-out"
+                className="absolute left-1/2 top-0 w-[74vw] h-full rounded-2xl overflow-hidden bg-neutral-900 transition-all duration-500 ease-out"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={s.mobileImage} alt={s.title} className="w-full h-full object-cover" />

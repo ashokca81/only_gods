@@ -86,7 +86,7 @@ const ProductCard = ({ product }: { product: GridItem }) => {
           type="button"
           onClick={onWishlist}
           aria-label={wished ? "Remove from favourites" : "Add to favourites"}
-          className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-3xl bg-white/15 shadow-lg hover:bg-white/25 transition-colors"
+          className={`absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-3xl bg-white/15 shadow-lg hover:bg-white/25 transition-all duration-300 ${wished ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
           style={{ WebkitBackdropFilter: "blur(24px)" }}
         >
           {/* border + icon invert against the photo behind for contrast on any colour */}

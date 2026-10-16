@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Image as ImageIcon, Film, LayoutGrid, GalleryHorizontal, Grid2x2, Zap, Megaphone, ReceiptText, PanelBottom, FileText, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, Film, LayoutGrid, GalleryHorizontal, Grid2x2, Zap, Megaphone, ReceiptText, PanelBottom, FileText, FileCheck2, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,7 @@ const sections = [
   { href: '/admin/settings/flash', title: 'Flash sale', desc: 'Store-wide timed discount with a countdown bar.', icon: Zap },
   { href: '/admin/settings/announcement', title: 'Announcement bar', desc: 'The thin message strip at the very top of the site.', icon: Megaphone },
   { href: '/admin/settings/gst', title: 'GST / Tax invoice', desc: 'Seller GSTIN and tax settings for invoices.', icon: ReceiptText },
+  { href: '/admin/settings/cod-terms', title: 'COD Terms & Conditions', desc: 'Text shown when a customer accepts terms before a Cash-on-Delivery order.', icon: FileCheck2 },
 ];
 
 export default function SettingsPage() {
