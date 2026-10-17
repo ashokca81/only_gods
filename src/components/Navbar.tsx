@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import SearchOverlay from "./SearchOverlay";
 import { useTheme } from "next-themes";
 import { useAutoContrast } from "@/hooks/useAutoContrast";
+import { OVERRIDE_KEY } from "@/lib/themeSchedule";
 
 const navLinks = [
   { name: "Home", path: "/", icon: Home },
@@ -47,6 +48,13 @@ const Navbar = () => {
     : "bg-transparent border-transparent";
 
   const textClass = scrolled || !isHome ? "text-black" : "text-white";
+
+  // Manual theme flip: remember it so the auto-schedule respects it for ~1 hour.
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem(OVERRIDE_KEY, JSON.stringify({ theme: next, at: Date.now() })); } catch {}
+    setTheme(next);
+  };
 
   return (
     <>
@@ -111,7 +119,7 @@ const Navbar = () => {
 
               {mounted && (
                 <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  onClick={toggleTheme}
                   className={`flex items-center justify-center transition-all duration-300 w-8 h-8 lg:w-auto lg:h-auto rounded-full lg:rounded-none backdrop-blur-3xl lg:backdrop-blur-none lg:bg-transparent shadow-lg lg:shadow-none lg:hover:opacity-60 border lg:border-none ${darkBehind ? 'bg-white/15 border-white/25 text-white' : 'bg-black/5 border-black/15 text-black'} lg:bg-transparent lg:text-current`}
                   aria-label="Toggle theme"
                 >

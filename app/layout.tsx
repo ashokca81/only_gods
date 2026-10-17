@@ -13,6 +13,7 @@ import { CartProvider } from '@/buffer/CartContext';
 import { CustomerProvider } from '@/buffer/CustomerContext';
 import { QueryProvider } from './providers';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import ThemeScheduler from '@/components/ThemeScheduler';
 import '@/index.css';
 
 const gillSans = localFont({
@@ -91,6 +92,7 @@ export default function RootLayout({
                     defaultTheme="light"
                     enableSystem={false}
                 >
+                    <ThemeScheduler />
                     <UIProvider>
                         <QueryProvider>
                             <CartProvider>
