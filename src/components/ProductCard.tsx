@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Product } from "@/data/products";
 import { formatPrice } from "@/lib/format";
@@ -139,19 +139,6 @@ const ProductCard = ({ product, index = 0, hideCarousel = false }: ProductCardPr
             </button>
           </div>
 
-          {/* Quick Add */}
-          <motion.div
-            initial={false}
-            className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
-          >
-            <button
-              onClick={(e) => e.preventDefault()}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-foreground text-background text-xs tracking-[0.15em] uppercase font-semibold rounded-xl hover:bg-foreground/90 transition-colors"
-            >
-              <ShoppingBag size={14} />
-              Quick Add
-            </button>
-          </motion.div>
         </div>
       </Link>
 

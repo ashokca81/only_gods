@@ -41,7 +41,7 @@ export default function CartPage() {
 
             <main className="flex-1">
                 <section className="pt-24 lg:pt-32 pb-16">
-                    <div className="container mx-auto px-4 lg:px-8 max-w-[1400px]">
+                    <div className="container mx-auto px-4 lg:px-8">
 
                         <div className="flex items-end justify-between mb-10 lg:mb-16">
                             <h1 className="text-3xl lg:text-5xl font-black text-foreground font-display uppercase tracking-wide">

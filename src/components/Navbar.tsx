@@ -44,10 +44,10 @@ const Navbar = () => {
   }, []);
 
   const bgClass = scrolled || !isHome
-    ? "bg-transparent border-transparent lg:bg-white/95 lg:backdrop-blur-md lg:border-black/10 lg:shadow-sm"
+    ? "bg-transparent border-transparent lg:bg-white/95 lg:backdrop-blur-md lg:border-black/10 lg:shadow-sm dark:lg:bg-black/95 dark:lg:border-white/10"
     : "bg-transparent border-transparent";
 
-  const textClass = scrolled || !isHome ? "text-black" : "text-white";
+  const textClass = scrolled || !isHome ? "text-black dark:text-white" : "text-white";
 
   // Manual theme flip: remember it so the auto-schedule respects it for ~1 hour.
   const toggleTheme = () => {
@@ -98,12 +98,12 @@ const Navbar = () => {
                 <img
                   src="/dark_logo.png"
                   alt="Only Gods"
-                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-auto object-contain transition-opacity duration-300 ${scrolled || !isHome ? 'opacity-100' : 'opacity-0'}`}
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-auto object-contain transition-opacity duration-300 ${scrolled || !isHome ? 'opacity-100 dark:opacity-0' : 'opacity-0'}`}
                 />
                 <img
                   src="/logo_white.png"
                   alt="Only Gods"
-                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-auto object-contain transition-opacity duration-300 ${scrolled || !isHome ? 'opacity-0' : 'opacity-100'}`}
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-auto object-contain transition-opacity duration-300 ${scrolled || !isHome ? 'opacity-0 dark:opacity-100' : 'opacity-100'}`}
                 />
               </Link>
             </div>

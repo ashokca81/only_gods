@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, ArrowRight, TrendingUp } from 'lucide-react';
+import { X, Search, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { useProducts } from '@/hooks/useProducts';
+import { formatPrice } from '@/lib/format';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -11,15 +13,32 @@ interface SearchOverlayProps {
 }
 
 const popularSearches = [
-    "Oversized Tee", "Bomber Jacket", "Cargo Pants", "Silk Shirt", "Accessories"
+    "Shirt", "Formals", "Casuals", "Hoodie", "Jacket"
 ];
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState("");
+    const { data: products } = useProducts();
+
+    // Live, case-insensitive match across name, category, brand, tags & description.
+    const results = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return [];
+        return products
+            .filter((p) =>
+                p.name.toLowerCase().includes(q) ||
+                p.category.toLowerCase().includes(q) ||
+                (p.brand ?? '').toLowerCase().includes(q) ||
+                (p.description ?? '').toLowerCase().includes(q) ||
+                (p.collections ?? []).some((c) => c.toLowerCase().includes(q))
+            )
+            .slice(0, 8);
+    }, [query, products]);
 
     useEffect(() => {
         if (isOpen) {
+            setQuery('');
             // Focus input after animation delay
             const timer = setTimeout(() => {
                 inputRef.current?.focus();
@@ -84,37 +103,58 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                 />
                             </motion.div>
 
-                            {/* Popular Searches */}
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.2, duration: 0.5 }}
-                                className="mt-12"
-                            >
-                                <div className="flex items-center gap-2 mb-6 text-sm tracking-[0.2em] uppercase text-muted-foreground font-medium">
-                                    <TrendingUp size={14} />
-                                    <span>Popular Searches</span>
+                            {/* Live results while typing; popular searches when empty */}
+                            {query.trim() ? (
+                                <div className="mt-8 max-h-[55vh] overflow-y-auto -mx-2 px-2">
+                                    {results.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground py-6">No products match &ldquo;{query.trim()}&rdquo;.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {results.map((p) => (
+                                                <Link
+                                                    key={p.id}
+                                                    href={`/product/${p.id}`}
+                                                    onClick={onClose}
+                                                    className="flex items-center gap-4 rounded-xl p-2 hover:bg-secondary transition-colors"
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={(p.images && p.images[0]) || p.image} alt={p.name} className="w-14 h-16 rounded-lg object-cover bg-secondary shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{p.category}</p>
+                                                        <p className="font-medium truncate">{p.name}</p>
+                                                    </div>
+                                                    <span className="font-semibold whitespace-nowrap">{formatPrice(p.price)}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
+                            ) : (
+                                <motion.div
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ delay: 0.2, duration: 0.5 }}
+                                    className="mt-12"
+                                >
+                                    <div className="flex items-center gap-2 mb-6 text-sm tracking-[0.2em] uppercase text-muted-foreground font-medium">
+                                        <TrendingUp size={14} />
+                                        <span>Popular Searches</span>
+                                    </div>
 
-                                <div className="flex flex-wrap gap-3">
-                                    {popularSearches.map((term, index) => (
-                                        <motion.div
-                                            key={term}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: 0.3 + index * 0.05 }}
-                                        >
-                                            <Link
-                                                href={`/shop?search=${term}`}
-                                                onClick={onClose}
+                                    <div className="flex flex-wrap gap-3">
+                                        {popularSearches.map((term) => (
+                                            <button
+                                                key={term}
+                                                type="button"
+                                                onClick={() => { setQuery(term); inputRef.current?.focus(); }}
                                                 className="inline-block px-6 py-3 bg-secondary rounded-full text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-300"
                                             >
                                                 {term}
-                                            </Link>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </motion.div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
                         </div>
                     </div>
 

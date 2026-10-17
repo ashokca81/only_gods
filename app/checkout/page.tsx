@@ -8,7 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
 import { DEFAULT_COD_TERMS, type CodTermsConfig } from '@/lib/codTerms';
-import { useCart } from '@/buffer/CartContext';
+import { useCart, cartKey } from '@/buffer/CartContext';
 import { useCustomer } from '@/buffer/CustomerContext';
 import { useUI } from '@/buffer/UIContext';
 
@@ -39,7 +39,7 @@ interface SavedAddress {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, clear, ready } = useCart();
+  const { items, subtotal, clear, ready, removeItem } = useCart();
   const { customer, loading: custLoading } = useCustomer();
   const { openAuthModal } = useUI();
   const [form, setForm] = useState<Form>(empty);
@@ -330,7 +330,7 @@ export default function CheckoutPage() {
       <Navbar />
       <main className="flex-1">
         <section className="pt-24 lg:pt-32 pb-16">
-          <div className="container mx-auto px-4 lg:px-8 max-w-[1100px]">
+          <div className="container mx-auto px-4 lg:px-8">
             <h1 className="text-3xl lg:text-4xl font-black font-display uppercase tracking-wide mb-10">Checkout</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-16">
@@ -461,7 +461,17 @@ export default function CheckoutPage() {
                             {[i.size, i.color].filter(Boolean).join(' · ')} × {i.quantity}
                           </p>
                         </div>
-                        <p className="font-medium whitespace-nowrap">{formatPrice(i.price * i.quantity)}</p>
+                        <div className="flex flex-col items-end gap-1 whitespace-nowrap">
+                          <p className="font-medium">{formatPrice(i.price * i.quantity)}</p>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(cartKey(i))}
+                            aria-label={`Remove ${i.name}`}
+                            className="text-muted-foreground hover:text-destructive inline-flex items-center gap-0.5 text-[11px]"
+                          >
+                            <X size={12} /> Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

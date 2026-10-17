@@ -64,7 +64,7 @@ export default function WishlistPage() {
       <Navbar />
       <main className="flex-1">
         <section className="pt-24 lg:pt-32 pb-16">
-          <div className="container mx-auto px-4 lg:px-8 max-w-[1400px]">
+          <div className="container mx-auto px-4 lg:px-8">
             <h1 className="text-3xl lg:text-5xl font-black font-display uppercase tracking-wide mb-8">Favourites <span className="text-lg text-muted-foreground font-medium align-top">({items.length})</span></h1>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {items.map((p) => (

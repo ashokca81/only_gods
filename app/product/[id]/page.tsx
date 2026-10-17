@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -35,7 +35,7 @@ export default function ProductDetailPage() {
         else router.push('/shop');
     };
     const id = params?.id as string;
-    const { data: products } = useProducts();
+    const { data: products, isPlaceholderData } = useProducts();
     const product = products.find((p) => p.id === id);
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
@@ -84,6 +84,15 @@ export default function ProductDetailPage() {
     };
 
     if (!product) {
+        // Live products are still loading (bundled placeholder doesn't include
+        // DB-only items) — show a spinner instead of a flash of "not found".
+        if (isPlaceholderData) {
+            return (
+                <div className="min-h-screen bg-background flex items-center justify-center pb-20 lg:pb-0">
+                    <Loader2 className="animate-spin text-muted-foreground" size={28} />
+                </div>
+            );
+        }
         return (
             <div className="min-h-screen bg-background flex items-center justify-center pb-20 lg:pb-0">
                 <p className="text-muted-foreground">Product not found.</p>
@@ -134,23 +143,23 @@ export default function ProductDetailPage() {
         } finally { setNotifying(false); }
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = (): boolean => {
         if (soldOut) {
             toast.error('This product is sold out');
-            return;
+            return false;
         }
         if (!customer) {
             openAuthModal();
             toast.error('Please log in to add items to your cart');
-            return;
+            return false;
         }
         if (sizes.length > 0 && !selectedSize) {
             toast.error('Please select a size');
-            return;
+            return false;
         }
         if (selectedSize && selectedSizeStock <= 0) {
             toast.error('Selected size is out of stock');
-            return;
+            return false;
         }
         addItem({
             id: product.id,
@@ -162,6 +171,12 @@ export default function ProductDetailPage() {
             quantity,
         });
         toast.success(`Added to cart — ${product.name}`);
+        return true;
+    };
+
+    // Buy Now = add to cart, then go straight to checkout.
+    const handleBuyNow = () => {
+        if (handleAddToCart()) router.push('/checkout');
     };
 
     return (
@@ -366,30 +381,26 @@ export default function ProductDetailPage() {
                                     </div>
 
                                     {/* Quantity & Add */}
-                                    <div className="flex gap-3 lg:gap-4 pt-4">
-                                        <div className="inline-flex items-center border border-border rounded-xl">
+                                    <div className="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-3 pt-4">
+                                      {/* Mobile row 1 (qty + wishlist + BAG IT); on desktop these join the single row */}
+                                      <div className="flex items-stretch gap-2 lg:gap-3 lg:contents">
+                                        {/* compact quantity stepper */}
+                                        <div className="inline-flex items-center border border-border rounded-xl shrink-0">
                                             <button
                                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-secondary transition-colors rounded-l-xl"
+                                                className="w-8 h-10 lg:w-10 lg:h-12 flex items-center justify-center hover:bg-secondary transition-colors rounded-l-xl"
                                             >
-                                                <Minus size={16} />
+                                                <Minus size={15} />
                                             </button>
-                                            <span className="w-8 lg:w-12 text-center text-sm font-bold">{quantity}</span>
+                                            <span className="w-6 lg:w-8 text-center text-sm font-bold">{quantity}</span>
                                             <button
                                                 onClick={() => setQuantity(quantity + 1)}
-                                                className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-secondary transition-colors rounded-r-xl"
+                                                className="w-8 h-10 lg:w-10 lg:h-12 flex items-center justify-center hover:bg-secondary transition-colors rounded-r-xl"
                                             >
-                                                <Plus size={16} />
+                                                <Plus size={15} />
                                             </button>
                                         </div>
-                                        <button
-                                            onClick={handleAddToCart}
-                                            disabled={soldOut}
-                                            className={`flex-1 h-10 lg:h-12 flex items-center justify-center gap-2 lg:gap-3 text-xs lg:text-sm tracking-[0.2em] uppercase font-bold rounded-xl transition-all shadow-lg ${soldOut ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed shadow-none' : 'bg-foreground text-background hover:bg-foreground/90 shadow-foreground/20'}`}
-                                        >
-                                            <ShoppingBag size={16} className="lg:w-[18px] lg:h-[18px]" />
-                                            {soldOut ? 'Sold Out' : 'Add to Cart'}
-                                        </button>
+                                        {/* wishlist */}
                                         <button
                                             onClick={async () => {
                                                 const r = await toggleWishlist(product.id);
@@ -397,10 +408,28 @@ export default function ProductDetailPage() {
                                                 else toast.success(r === 'added' ? 'Added to favourites ♡' : 'Removed from favourites');
                                             }}
                                             title="Save to favourites"
-                                            className="w-10 h-10 lg:w-14 lg:h-12 border border-border rounded-xl flex items-center justify-center hover:bg-secondary transition-colors group"
+                                            className="w-10 h-10 lg:w-12 lg:h-12 shrink-0 border border-border rounded-xl flex items-center justify-center hover:bg-secondary transition-colors group"
                                         >
                                             <Heart size={18} className={`lg:w-5 lg:h-5 transition-colors ${isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'group-hover:fill-current'}`} />
                                         </button>
+                                        {/* BAG IT */}
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={soldOut}
+                                            className={`flex-1 h-10 lg:h-12 flex items-center justify-center gap-2 text-xs lg:text-sm tracking-widest lg:tracking-[0.2em] uppercase font-bold rounded-xl transition-all shadow-lg ${soldOut ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed shadow-none' : 'bg-foreground text-background hover:bg-foreground/90 shadow-foreground/20'}`}
+                                        >
+                                            <ShoppingBag size={16} className="shrink-0 lg:w-[18px] lg:h-[18px]" />
+                                            {soldOut ? 'Sold Out' : 'BAG IT'}
+                                        </button>
+                                      </div>
+                                      {/* BUY NOW — full width on mobile (row 2), inline on desktop */}
+                                      <button
+                                          onClick={handleBuyNow}
+                                          disabled={soldOut}
+                                          className={`w-full lg:flex-1 h-10 lg:h-12 flex items-center justify-center gap-2 text-xs lg:text-sm tracking-widest lg:tracking-[0.2em] uppercase font-bold rounded-xl transition-all border ${soldOut ? 'border-neutral-200 text-neutral-400 cursor-not-allowed' : 'border-foreground text-foreground hover:bg-foreground hover:text-background'}`}
+                                      >
+                                          Buy Now
+                                      </button>
                                     </div>
 
                                     {soldOut && (

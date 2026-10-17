@@ -160,7 +160,7 @@ export default function ProfilePage() {
       <Navbar />
       <main className="flex-1">
         <section className="pt-24 lg:pt-32 pb-16">
-          <div className="container mx-auto px-0 sm:px-4 lg:px-8 max-w-[1180px] space-y-4 sm:space-y-6">
+          <div className="container mx-auto px-0 sm:px-4 lg:px-8 space-y-4 sm:space-y-6">
 
             {/* Profile header */}
             <div className="rounded-none sm:rounded-2xl border-y sm:border border-border bg-gradient-to-r from-secondary/50 via-secondary/20 to-transparent p-4 sm:p-6 lg:p-7 flex flex-row items-center gap-3 sm:gap-5">
