@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Minus, Plus, Heart, ShoppingBag, ArrowLeft, Truck, RotateCcw, Shield, Star, Scale, Info, Maximize2, X, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -27,6 +27,13 @@ import {
 
 export default function ProductDetailPage() {
     const params = useParams();
+    const router = useRouter();
+    // Go back to wherever the user came from (at their saved scroll); fall back
+    // to the shop when the product was opened directly (shared link / new tab).
+    const handleBack = () => {
+        if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+        else router.push('/shop');
+    };
     const id = params?.id as string;
     const { data: products } = useProducts();
     const product = products.find((p) => p.id === id);
@@ -40,6 +47,17 @@ export default function ProductDetailPage() {
     const [zoomIndex, setZoomIndex] = useState<number | null>(null);
     const [notified, setNotified] = useState(false);
     const [notifying, setNotifying] = useState(false);
+    // Size Guide popup — product's own image wins, else the dashboard default.
+    const [showSizeGuide, setShowSizeGuide] = useState(false);
+    const [defaultSizeGuide, setDefaultSizeGuide] = useState('');
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/settings/size-guide').then((r) => r.json())
+            .then((j) => { if (alive && typeof j?.sizeGuide?.image === 'string') setDefaultSizeGuide(j.sizeGuide.image); })
+            .catch(() => {});
+        return () => { alive = false; };
+    }, []);
+    const sizeGuideImg = product?.sizeGuideImage || defaultSizeGuide;
     const flash = useFlash();
     const imgCountRef = useRef(1);
     const touchStartX = useRef<number | null>(null);
@@ -156,10 +174,10 @@ export default function ProductDetailPage() {
 
                         {/* Breadcrumb */}
                         <div className="mb-4 lg:mb-6">
-                            <Link href="/shop" className="inline-flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-all duration-300 group bg-secondary/50 hover:bg-secondary px-4 py-2 rounded-full border border-border/50">
+                            <button type="button" onClick={handleBack} className="inline-flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-all duration-300 group bg-secondary/50 hover:bg-secondary px-4 py-2 rounded-full border border-border/50">
                                 <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform duration-300" />
-                                <span className="font-medium">Back to Shop</span>
-                            </Link>
+                                <span className="font-medium">Back</span>
+                            </button>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-20">
@@ -296,12 +314,20 @@ export default function ProductDetailPage() {
 
                                         {/* Size */}
                                         <div>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="text-xs tracking-[0.2em] uppercase font-bold text-foreground">Size</span>
-                                                <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4">
-                                                    <Scale size={14} /> Size Guide
-                                                </button>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs tracking-[0.2em] uppercase font-bold text-foreground">Size{selectedSize ? `: ${selectedSize}` : ''}</span>
+                                                {sizeGuideImg && (
+                                                    <button type="button" onClick={() => setShowSizeGuide(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4">
+                                                        <Scale size={14} /> Size Guide
+                                                    </button>
+                                                )}
                                             </div>
+                                            {(() => {
+                                                const measure = sizes.find((s) => s.size === selectedSize)?.measure?.trim();
+                                                return measure ? (
+                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"><span className="font-semibold">Garment:</span> {measure}</p>
+                                                ) : <div className="mb-3" />;
+                                            })()}
                                             <div className="grid grid-cols-5 gap-2">
                                                 {sizes.map((s) => {
                                                     const out = s.stock <= 0;
@@ -476,6 +502,22 @@ export default function ProductDetailPage() {
 
             </main>
             <Footer />
+
+            {/* Size Guide popup */}
+            {showSizeGuide && sizeGuideImg && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSizeGuide(false)}>
+                    <div className="relative max-w-2xl w-full bg-background rounded-2xl border border-border overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                            <span className="text-xs font-bold uppercase tracking-[0.2em]">Size Guide</span>
+                            <button onClick={() => setShowSizeGuide(false)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+                        </div>
+                        <div className="max-h-[80vh] overflow-auto p-2 bg-white">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={sizeGuideImg} alt="Size guide" className="w-full h-auto object-contain" />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Zoom Slider Overlay */}
             {

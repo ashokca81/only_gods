@@ -6,11 +6,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { DEFAULT_CATEGORIES, type Category } from '@/lib/categories';
 
 const sortOptions = ['Featured', 'Price: Low to High', 'Price: High to Low', 'Newest'];
 
 export default function ShopPage() {
+    useScrollRestoration();
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [collection, setCollection] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState('Featured');

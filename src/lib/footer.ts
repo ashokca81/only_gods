@@ -6,6 +6,12 @@ export interface FooterLink {
   href: string;
 }
 
+export interface SocialIcon {
+  icon: string;   // platform key — see SOCIAL_OPTIONS in src/lib/socialIcons.ts
+  href: string;
+  enabled: boolean;
+}
+
 export interface FooterConfig {
   brandLine1: string;
   brandLine2: string;
@@ -22,9 +28,10 @@ export interface FooterConfig {
   infoHeading: string;
   infoLinks: FooterLink[];
   socialHeading: string;
-  facebook: string;
-  instagram: string;
-  twitter: string;
+  facebook: string;   // legacy — kept for old data; new edits use `socials`
+  instagram: string;  // legacy
+  twitter: string;    // legacy
+  socials: SocialIcon[];
   newsletterHeading: string;
   legalLinks: FooterLink[];
   copyright: string;
@@ -57,6 +64,11 @@ export const DEFAULT_FOOTER: FooterConfig = {
   facebook: '#',
   instagram: '#',
   twitter: '#',
+  socials: [
+    { icon: 'facebook', href: '#', enabled: true },
+    { icon: 'instagram', href: '#', enabled: true },
+    { icon: 'twitter', href: '#', enabled: true },
+  ],
   newsletterHeading: 'Join the Club of Gods',
   legalLinks: [
     { label: 'Terms & Conditions', href: '/terms' },
@@ -84,9 +96,33 @@ function linkArr(v: unknown, fallback: FooterLink[]): FooterLink[] {
   return out;
 }
 
+function socialArr(v: unknown): SocialIcon[] {
+  if (!Array.isArray(v)) return [];
+  const out: SocialIcon[] = [];
+  for (const s of v) {
+    const o = (s ?? {}) as Partial<SocialIcon>;
+    const icon = typeof o.icon === 'string' ? o.icon.trim() : '';
+    if (!icon) continue;
+    out.push({
+      icon,
+      href: typeof o.href === 'string' && o.href.trim() !== '' ? o.href.trim() : '#',
+      enabled: o.enabled !== false,
+    });
+  }
+  return out;
+}
+
 export function mergeFooter(value: unknown): FooterConfig {
   const o = (value ?? {}) as Partial<FooterConfig>;
   const d = DEFAULT_FOOTER;
+  // New data stores `socials`; old data only had facebook/instagram/twitter — migrate those.
+  const socials = Array.isArray(o.socials)
+    ? socialArr(o.socials)
+    : [
+        { icon: 'facebook', href: str(o.facebook, d.facebook), enabled: true },
+        { icon: 'instagram', href: str(o.instagram, d.instagram), enabled: true },
+        { icon: 'twitter', href: str(o.twitter, d.twitter), enabled: true },
+      ];
   return {
     brandLine1: str(o.brandLine1, d.brandLine1),
     brandLine2: str(o.brandLine2, d.brandLine2),
@@ -106,6 +142,7 @@ export function mergeFooter(value: unknown): FooterConfig {
     facebook: str(o.facebook, d.facebook),
     instagram: str(o.instagram, d.instagram),
     twitter: str(o.twitter, d.twitter),
+    socials,
     newsletterHeading: str(o.newsletterHeading, d.newsletterHeading),
     legalLinks: linkArr(o.legalLinks, d.legalLinks),
     copyright: str(o.copyright, d.copyright),

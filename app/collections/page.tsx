@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import CategoryCard from '@/components/CategoryCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollRestorer from '@/components/ScrollRestorer';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { mergeCollections } from '@/lib/collections';
 
@@ -32,6 +33,7 @@ export default async function CollectionsPage() {
 
     return (
         <div className="min-h-screen bg-background">
+            <ScrollRestorer />
             <Navbar />
             <div className="pt-20 pb-12 lg:pt-28 lg:pb-20">
                 <div className="container mx-auto px-4 lg:px-8">

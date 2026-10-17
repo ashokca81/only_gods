@@ -3,6 +3,7 @@ import type { Product } from '@/data/products';
 export interface VariantSize {
   size: string;
   stock: number;
+  measure?: string; // per-size garment measurement, e.g. "Chest 42.9in"
 }
 
 /** One colour variant: its own price, images and size/stock list. */

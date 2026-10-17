@@ -27,6 +27,7 @@ export interface ProductInput {
   description: string;
   details_care: string[];
   shipping_returns: string | null;
+  size_guide_image: string | null;
   trending: boolean;
   new_arrival: boolean;
   is_active: boolean;

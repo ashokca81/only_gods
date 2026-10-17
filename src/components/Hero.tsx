@@ -54,7 +54,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative w-full h-[calc(100svh-4rem)] lg:h-screen overflow-hidden bg-black flex items-center justify-center">
+    <section data-nav="dark" className="relative w-full h-[calc(100svh-4rem)] lg:h-screen overflow-hidden bg-black flex items-center justify-center">
 
       {/* Background Video/Image */}
       <div className="absolute inset-0 z-0">

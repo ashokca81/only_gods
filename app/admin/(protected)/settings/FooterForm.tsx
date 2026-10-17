@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Loader2, Save, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { FooterConfig, FooterLink } from '@/lib/footer';
+import type { FooterConfig, FooterLink, SocialIcon } from '@/lib/footer';
+import { SOCIAL_OPTIONS } from '@/lib/socialIcons';
 import InfoCard from '../../_components/InfoCard';
 
 const inputCls =
@@ -50,6 +51,28 @@ function LinkList({ label, items, onChange }: { label: string; items: FooterLink
         ))}
       </div>
       <button type="button" onClick={() => onChange([...items, { label: '', href: '' }])} className="mt-2 inline-flex items-center gap-1.5 rounded-[5px] border border-dashed border-neutral-300 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-50"><Plus size={14} /> Add link</button>
+    </div>
+  );
+}
+
+function SocialList({ items, onChange }: { items: SocialIcon[]; onChange: (v: SocialIcon[]) => void }) {
+  const set = (i: number, patch: Partial<SocialIcon>) => onChange(items.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-neutral-600 mb-1">Social icons (tick = show, pick icon + link)</label>
+      <div className="space-y-2">
+        {items.map((s, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <input type="checkbox" checked={s.enabled} onChange={(e) => set(i, { enabled: e.target.checked })} className="w-4 h-4 shrink-0" title="Show this icon" />
+            <select value={s.icon} onChange={(e) => set(i, { icon: e.target.value })} className="h-11 px-2 rounded-[5px] border border-neutral-200 bg-white text-sm shrink-0 w-32">
+              {SOCIAL_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+            <input value={s.href} onChange={(e) => set(i, { href: e.target.value })} placeholder="https://… link" className={inputCls} />
+            <button type="button" onClick={() => onChange(items.filter((_, idx) => idx !== i))} className="shrink-0 w-11 h-11 rounded-[5px] border border-red-200 text-red-500 flex items-center justify-center hover:bg-red-50"><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...items, { icon: 'facebook', href: '', enabled: true }])} className="mt-2 inline-flex items-center gap-1.5 rounded-[5px] border border-dashed border-neutral-300 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-50"><Plus size={14} /> Add icon</button>
     </div>
   );
 }
@@ -131,9 +154,7 @@ export default function FooterForm({ initial }: { initial: FooterConfig }) {
 
         <Group title="Socials">
           <Field label="Heading" value={f.socialHeading} onChange={(v) => set('socialHeading', v)} />
-          <Field label="Facebook URL" value={f.facebook} onChange={(v) => set('facebook', v)} />
-          <Field label="Instagram URL" value={f.instagram} onChange={(v) => set('instagram', v)} />
-          <Field label="Twitter URL" value={f.twitter} onChange={(v) => set('twitter', v)} />
+          <SocialList items={f.socials} onChange={(v) => set('socials', v)} />
         </Group>
 
         <Group title="Newsletter & legal">

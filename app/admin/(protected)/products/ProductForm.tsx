@@ -323,6 +323,20 @@ export default function ProductForm({
                 placeholder={'Free standard shipping on orders over ₹2,000. Processed in 1-2 business days.\nReturns accepted within 30 days — unworn, with tags.'}
               />
             </Field>
+            <Field label="Size Guide image (optional — overrides the Settings default, for this product only)">
+              {form.size_guide_image ? (
+                <div className="flex items-start gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={form.size_guide_image} alt="Size guide" className="h-28 w-auto rounded-[5px] border border-neutral-200 object-contain bg-white" />
+                  <button type="button" onClick={() => set('size_guide_image', null)} className="text-xs text-red-500 inline-flex items-center gap-1"><Trash2 size={13} /> Remove</button>
+                </div>
+              ) : (
+                <label className="inline-flex items-center gap-2 cursor-pointer rounded-[5px] border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50">
+                  <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload size chart'}
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { const url = await uploadFile(f); if (url) set('size_guide_image', url); } }} />
+                </label>
+              )}
+            </Field>
           </Card>
 
           {/* Images / variants */}
@@ -599,13 +613,16 @@ function VariantEditor({
         <div className="space-y-1.5">
           {variant.sizes.map((s, si) => (
             <div key={s.size} className="flex items-center gap-2 text-sm">
-              <span className="w-16 font-medium">{s.size}</span>
+              <span className="w-10 font-medium shrink-0">{s.size}</span>
               <input type="number" value={s.stock}
                 onChange={(e) => onChange({ sizes: variant.sizes.map((x, i) => (i === si ? { ...x, stock: Number(e.target.value) } : x)) })}
-                className="w-24 rounded-[5px] border border-neutral-300 px-2 py-1 text-sm" placeholder="Stock" />
-              <span className="text-xs text-neutral-400">in stock</span>
+                className="w-16 rounded-[5px] border border-neutral-300 px-2 py-1 text-sm" placeholder="Stock" />
+              <span className="text-[11px] text-neutral-400 shrink-0">in stock</span>
+              <input type="text" value={s.measure ?? ''}
+                onChange={(e) => onChange({ sizes: variant.sizes.map((x, i) => (i === si ? { ...x, measure: e.target.value } : x)) })}
+                className="flex-1 min-w-0 rounded-[5px] border border-neutral-300 px-2 py-1 text-sm" placeholder="Garment measurement — e.g. Chest 42.9in" />
               <button type="button" onClick={() => onChange({ sizes: variant.sizes.filter((_, i) => i !== si) })}
-                className="ml-auto text-neutral-400 hover:text-red-600"><X size={14} /></button>
+                className="shrink-0 text-neutral-400 hover:text-red-600"><X size={14} /></button>
             </div>
           ))}
         </div>

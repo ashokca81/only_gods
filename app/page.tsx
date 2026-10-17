@@ -12,8 +12,10 @@ import Newsletter from '@/components/Newsletter';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useProducts } from '@/hooks/useProducts';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export default function HomePage() {
+    useScrollRestoration();
     const { data: products } = useProducts();
     const trending = products.filter((p) => p.trending);
 
@@ -35,7 +37,7 @@ export default function HomePage() {
             <CollectionCarousel />
 
             {/* Editorial / Trending */}
-            <section className="lg:hidden pt-12 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black">
+            <section className="lg:hidden pt-8 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black">
                 <div className="container mx-auto px-4 lg:px-8">
                     {/* Section Header */}
                     <div className="mb-2 lg:mb-20">
@@ -67,7 +69,7 @@ export default function HomePage() {
                                 View All <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
-                        <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 mt-3 lg:mt-14" />
+                        <div className="hidden lg:block w-full h-[1px] bg-black/10 dark:bg-white/10 mt-3 lg:mt-14" />
                     </div>
 
                     {/* Magazine Grid */}

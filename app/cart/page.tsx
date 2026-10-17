@@ -8,8 +8,10 @@ import Footer from '@/components/Footer';
 import Upsell from '@/components/Upsell';
 import { formatPrice } from '@/lib/format';
 import { useCart, cartKey } from '@/buffer/CartContext';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export default function CartPage() {
+    useScrollRestoration();
     const { items, updateQty, removeItem, subtotal, ready } = useCart();
     const shipping = subtotal >= 2000 || subtotal === 0 ? 0 : 99;
     const total = subtotal + shipping;

@@ -99,8 +99,11 @@ const AuthModal = () => {
 
                 <div className="p-8 pt-12 pb-12 lg:pb-8">
                     <div className="text-center mb-8">
-                        <h2 className="text-xl font-black tracking-[0.2em] uppercase mb-2">{title}</h2>
-                        <p className="text-xs text-muted-foreground tracking-wide">{subtitle}</p>
+                        <h2 className="font-display text-xl font-black tracking-[0.15em] uppercase text-foreground whitespace-nowrap">
+                            Unlock God Mode
+                        </h2>
+                        <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-muted-foreground mt-2">{title}</p>
+                        <p className="text-xs text-muted-foreground tracking-wide mt-1">{subtitle}</p>
                     </div>
 
                     {step === "phone" && (

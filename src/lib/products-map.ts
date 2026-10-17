@@ -30,6 +30,7 @@ export interface ProductRow {
   variants?: Variant[] | null;
   details_care?: string[] | null;
   shipping_returns?: string | null;
+  size_guide_image?: string | null;
 }
 
 /** Map a DB row to the Product type the storefront already uses. */
@@ -52,6 +53,7 @@ export function rowToProduct(row: ProductRow): Product {
     description: row.description ?? '',
     detailsCare: row.details_care ?? [],
     shippingReturns: row.shipping_returns ?? '',
+    sizeGuideImage: row.size_guide_image ?? undefined,
     trending: row.trending ?? false,
     newArrival: row.new_arrival ?? false,
   };

@@ -12,12 +12,7 @@ export default function CollectionCarousel() {
   const [index, setIndex] = useState(0);
   const touchX = useRef<number | null>(null);
 
-  // Auto-play (desktop full-screen carousel).
-  useEffect(() => {
-    if (n <= 1) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % n), 5000);
-    return () => clearInterval(t);
-  }, [n]);
+  // Auto-play disabled — users swipe or use the arrows to change slides.
 
   useEffect(() => { if (index >= n && n > 0) setIndex(0); }, [n, index]);
 
@@ -28,6 +23,7 @@ export default function CollectionCarousel() {
     <>
       {/* DESKTOP: full-screen auto-playing carousel */}
       <section
+        data-nav="dark"
         className="hidden lg:block relative w-full h-[72vh] overflow-hidden bg-black"
         onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
@@ -73,7 +69,7 @@ export default function CollectionCarousel() {
 
       {/* MOBILE: 3D stacked carousel */}
       <section
-        className="lg:hidden relative py-10 overflow-hidden"
+        className="lg:hidden relative pt-10 pb-2 overflow-hidden"
         onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touchX.current === null) return;

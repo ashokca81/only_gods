@@ -8,10 +8,12 @@ import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
 import { useCustomer } from '@/buffer/CustomerContext';
 import { useUI } from '@/buffer/UIContext';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 interface WishItem { id: string; name: string; price: number; image: string; category: string }
 
 export default function WishlistPage() {
+  useScrollRestoration();
   const { customer, loading, toggleWishlist } = useCustomer();
   const { openAuthModal } = useUI();
   const [items, setItems] = useState<WishItem[]>([]);
