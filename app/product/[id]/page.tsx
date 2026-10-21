@@ -351,7 +351,7 @@ export default function ProductDetailPage() {
                                                         key={s.size}
                                                         onClick={() => !out && setSelectedSize(s.size)}
                                                         disabled={out}
-                                                        title={out ? 'Sold out' : `${s.stock} in stock`}
+                                                        title={out ? 'Sold out' : s.stock <= 10 ? `Only ${s.stock} left` : undefined}
                                                         className={`py-3 rounded-lg text-xs font-bold transition-all border relative ${
                                                             out
                                                                 ? 'border-border text-muted-foreground/40 line-through cursor-not-allowed bg-secondary/30'
@@ -368,13 +368,9 @@ export default function ProductDetailPage() {
                                                     <span className="col-span-5 text-xs text-muted-foreground">No sizes for this colour.</span>
                                                 )}
                                             </div>
-                                            {selectedSize && (
-                                                <p className={`text-xs mt-2 font-medium ${selectedSizeStock <= 0 ? 'text-destructive' : selectedSizeStock <= 5 ? 'text-destructive' : 'text-emerald-600'}`}>
-                                                    {selectedSizeStock <= 0
-                                                        ? 'Sold out'
-                                                        : selectedSizeStock <= 5
-                                                            ? `Only ${selectedSizeStock} left!`
-                                                            : `In stock — ${selectedSizeStock} available`}
+                                            {selectedSize && selectedSizeStock <= 10 && (
+                                                <p className={`text-xs mt-2 font-medium ${selectedSizeStock <= 0 ? 'text-destructive' : 'text-amber-600'}`}>
+                                                    {selectedSizeStock <= 0 ? 'Sold out' : `Only ${selectedSizeStock} left!`}
                                                 </p>
                                             )}
                                         </div>
