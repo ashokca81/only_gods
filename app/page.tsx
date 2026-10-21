@@ -13,11 +13,21 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useProducts } from '@/hooks/useProducts';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { useFeatured } from '@/hooks/useFeatured';
 
 export default function HomePage() {
     useScrollRestoration();
     const { data: products } = useProducts();
-    const trending = products.filter((p) => p.trending);
+    // Admin-picked "What's Hot" products; fall back to trending-flagged ones.
+    const featured = useFeatured();
+    const byId = new Map(products.map((p) => [p.id, p]));
+    const picked = featured.ids.map((id) => byId.get(id)).filter((p): p is (typeof products)[number] => !!p);
+    const trending = picked.length > 0 ? picked : products.filter((p) => p.trending);
+    // Per-device show/hide for the "What's Hot" magazine grid.
+    const showWhatsHot = trending.length > 0 && (featured.desktopEnabled || featured.mobileEnabled);
+    const whatsHotVis = featured.mobileEnabled
+        ? (featured.desktopEnabled ? '' : 'lg:hidden')
+        : 'hidden lg:block';
 
     return (
         <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-20 lg:pb-0 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
@@ -36,8 +46,9 @@ export default function HomePage() {
             {/* Collection carousel (replaces the old split layout) */}
             <CollectionCarousel />
 
-            {/* Editorial / Trending */}
-            <section className="lg:hidden pt-8 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black">
+            {/* Editorial / Trending — "What's Hot" (admin: pick products + show/hide per device) */}
+            {showWhatsHot && (
+            <section className={`${whatsHotVis} pt-8 pb-12 lg:py-32 overflow-hidden bg-white dark:bg-black`}>
                 <div className="container mx-auto px-4 lg:px-8">
                     {/* Section Header */}
                     <div className="mb-2 lg:mb-20">
@@ -166,6 +177,7 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+            )}
 
             {/* Product Grid Section */}
             <ProductGrid />

@@ -5,7 +5,6 @@ import { Loader2, Save, Plus, X, ArrowUp, ArrowDown, Search } from 'lucide-react
 import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useProducts';
 import { formatPrice } from '@/lib/format';
-import { HOME_PRODUCTS_MAX } from '@/lib/homeProducts';
 import InfoCard from '../../_components/InfoCard';
 
 export default function HomeProductsForm({ initialIds }: { initialIds: string[] }) {
@@ -26,8 +25,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
   }, [products, ids, q]);
 
   const add = (id: string) => {
-    if (ids.length >= HOME_PRODUCTS_MAX) { toast.error(`You can pick up to ${HOME_PRODUCTS_MAX} products`); return; }
-    setIds((p) => [...p, id]);
+    setIds((p) => (p.includes(id) ? p : [...p, id]));
   };
   const remove = (id: string) => setIds((p) => p.filter((x) => x !== id));
   const move = (i: number, dir: -1 | 1) =>
@@ -64,7 +62,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
         <div>
           <h1 className="text-2xl font-bold">Home products</h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Pick which products show in the home grid (up to {HOME_PRODUCTS_MAX}).
+            Pick which products show in the home grid (add as many as you like).
           </p>
         </div>
         <button
@@ -78,7 +76,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
 
       {/* Selected */}
       <div className="rounded-xl border border-neutral-200 p-4 mb-5">
-        <p className="text-sm font-semibold mb-1">Selected ({selected.length}/{HOME_PRODUCTS_MAX})</p>
+        <p className="text-sm font-semibold mb-1">Selected ({selected.length})</p>
         <p className="text-xs text-neutral-500 mb-3">Top to bottom here = left to right on the home grid. Empty ⇒ all products show.</p>
         {selected.length === 0 ? (
           <p className="text-sm text-neutral-500">Nothing picked — the home grid shows all products.</p>
@@ -125,8 +123,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
                 key={p.id}
                 type="button"
                 onClick={() => add(p.id)}
-                disabled={ids.length >= HOME_PRODUCTS_MAX}
-                className="flex items-center gap-3 rounded-[5px] border border-neutral-200 p-2 text-left hover:bg-neutral-50 disabled:opacity-40"
+                className="flex items-center gap-3 rounded-[5px] border border-neutral-200 p-2 text-left hover:bg-neutral-50"
               >
                 <div className="w-10 h-10 shrink-0 rounded-[5px] overflow-hidden bg-neutral-100 border border-neutral-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -149,7 +146,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
           intro="Choose the exact products shown in the big grid on the home page."
           flow={['Search a product', 'Add it', 'Order them', 'Save']}
           steps={[
-            { title: 'Pick up to 8', desc: `Add the products you want featured (max ${HOME_PRODUCTS_MAX}).` },
+            { title: 'Add any number', desc: 'Pick as many products as you want — there is no limit.' },
             { title: 'Order', desc: 'Use the up/down arrows — top is first on the grid.' },
             { title: 'Show all', desc: 'Remove everything to go back to showing all products automatically.' },
             { title: 'Live', desc: 'Changes appear on the home page as soon as you Save.' },
