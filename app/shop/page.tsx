@@ -77,7 +77,7 @@ export default function ShopPage() {
                         >
                             <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">{collection ? 'Collection' : 'Shop'}</p>
                             <h1 className="text-4xl lg:text-6xl font-bold text-foreground font-display">
-                                {collection ? collection : (selectedCategory === 'All' ? 'All Products' : selectedCategory)}
+                                {collection ? collection : (selectedCategory === 'All' ? 'GODS UNIFORMS' : selectedCategory)}
                             </h1>
                             {collection && (
                                 <button

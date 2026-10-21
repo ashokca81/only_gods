@@ -35,8 +35,8 @@ export default function WishlistPage() {
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 pt-32 pb-40 text-center">
           <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6"><Heart size={30} className="text-muted-foreground" /></div>
-          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">Your Favourites</h1>
-          <p className="text-muted-foreground mb-8">Log in to save and view your favourite products.</p>
+          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">Gods Love Your Favourites</h1>
+          <p className="text-muted-foreground mb-8">Keep the pieces that speak to you.</p>
           <button onClick={() => openAuthModal()} className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-[5px]">Login</button>
         </div>
         <Footer />
@@ -50,9 +50,9 @@ export default function WishlistPage() {
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 pt-32 pb-40 text-center">
           <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6"><Heart size={30} className="text-muted-foreground" /></div>
-          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">No Favourites Yet</h1>
-          <p className="text-muted-foreground mb-8">Tap the heart on any product to save it here.</p>
-          <Link href="/shop" className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-[5px]">Start Shopping</Link>
+          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">Gods Love Your Favourites</h1>
+          <p className="text-muted-foreground mb-8">Keep the pieces that speak to you.</p>
+          <Link href="/shop" className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-[5px]">Explore Collection</Link>
         </div>
         <Footer />
       </div>

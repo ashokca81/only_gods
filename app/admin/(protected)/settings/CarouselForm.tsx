@@ -85,8 +85,9 @@ function Row({ slide, index, isFirst, isLast, categories, onChange, onMove, onDe
   );
 }
 
-export default function CarouselForm({ initial, allCategories }: { initial: CarouselSlide[]; allCategories: Category[] }) {
+export default function CarouselForm({ initial, allCategories, desktopEnabled: initialDesktopEnabled = true }: { initial: CarouselSlide[]; allCategories: Category[]; desktopEnabled?: boolean }) {
   const [slides, setSlides] = useState<CarouselSlide[]>(initial);
+  const [desktopEnabled, setDesktopEnabled] = useState(initialDesktopEnabled);
   const [saving, setSaving] = useState(false);
 
   const update = (i: number, s: CarouselSlide) => setSlides((p) => p.map((x, idx) => (idx === i ? s : x)));
@@ -99,7 +100,7 @@ export default function CarouselForm({ initial, allCategories }: { initial: Caro
     if (clean.length === 0) { toast.error('Add at least one slide with an image'); return; }
     setSaving(true);
     try {
-      const r = await fetch('/api/admin/carousel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slides: clean }) });
+      const r = await fetch('/api/admin/carousel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slides: clean, flags: { desktopEnabled } }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || 'Save failed');
       setSlides(j.slides as CarouselSlide[]);
@@ -119,6 +120,12 @@ export default function CarouselForm({ initial, allCategories }: { initial: Caro
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save changes
         </button>
       </div>
+
+      <label className="flex items-center gap-2 mb-5 rounded-xl border border-neutral-200 bg-white p-4 cursor-pointer">
+        <input type="checkbox" checked={desktopEnabled} onChange={(e) => setDesktopEnabled(e.target.checked)} className="w-4 h-4" />
+        <span className="text-sm font-medium">Show the carousel on desktop</span>
+        <span className="text-xs text-neutral-400">(untick to hide it on desktop; mobile is unaffected)</span>
+      </label>
 
       <div className="space-y-3">
         {slides.map((s, i) => (

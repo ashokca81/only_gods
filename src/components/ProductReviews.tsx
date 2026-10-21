@@ -75,7 +75,8 @@ export default function ProductReviews({ productId }: { productId: string }) {
     <section className="border-t border-border pt-10 mt-10">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
-          <h2 className="text-xl font-bold font-display uppercase tracking-wide">Reviews</h2>
+          <h2 className="text-xl font-bold font-display uppercase tracking-wide">The Gods Have Spoken.</h2>
+          <p className="text-xs text-muted-foreground mt-1">Your voice is part of our identity.</p>
           <div className="flex items-center gap-2 mt-1">
             <Stars value={average} />
             <span className="text-sm text-muted-foreground">
@@ -87,7 +88,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
           onClick={() => (customer ? setOpen((o) => !o) : openAuthModal())}
           className="rounded-[5px] bg-foreground text-background px-5 py-2.5 text-xs font-bold uppercase tracking-wider"
         >
-          {customer ? 'Write a review' : 'Log in to review'}
+          {customer ? 'Write a review' : 'Make your statement'}
         </button>
       </div>
 

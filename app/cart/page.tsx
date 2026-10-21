@@ -24,10 +24,10 @@ export default function CartPage() {
                     <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6">
                         <ShoppingBag size={32} className="text-muted-foreground" />
                     </div>
-                    <h1 className="text-2xl lg:text-3xl font-bold font-display uppercase tracking-wider mb-2 text-center">Your Cart is Empty</h1>
-                    <p className="text-muted-foreground mb-8 text-center max-w-md">Looks like you haven&apos;t added anything yet.</p>
+                    <h1 className="text-2xl lg:text-3xl font-bold font-display uppercase tracking-wider mb-2 text-center">God&apos;s Taste Starts Here.</h1>
+                    <p className="text-muted-foreground mb-8 text-center max-w-md">Discover pieces that define your presence.</p>
                     <Link href="/shop" className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors">
-                        Start Shopping
+                        Explore Collection
                     </Link>
                 </div>
                 <Footer />

@@ -136,7 +136,7 @@ const ProductGrid = () => {
   }));
 
   return (
-    <section className="pt-8 pb-4 lg:pt-20 lg:pb-0 bg-white dark:bg-black border-t-0 lg:border-t border-black/10 dark:border-white/10">
+    <section className="pt-8 pb-4 lg:pt-20 lg:pb-0 bg-white dark:bg-black">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-6 md:gap-y-10">

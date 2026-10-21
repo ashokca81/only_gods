@@ -445,9 +445,9 @@ export default function ProductDetailPage() {
                                     {/* Feature Badges */}
                                     <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
                                         {[
-                                            { icon: Truck, line1: "Free Shipping", line2: "On orders over ₹2,000" },
-                                            { icon: Shield, line1: "Secure Checkout", line2: "SSL Encrypted" },
-                                            { icon: RotateCcw, line1: "Free Returns", line2: "Within 30 days" },
+                                            { icon: Truck, line1: "GODS Standard Shipping", line2: "" },
+                                            { icon: Shield, line1: "GODS will Secure your Checkout", line2: "" },
+                                            { icon: RotateCcw, line1: "GODS will Return", line2: "" },
                                         ].map((item, i) => (
                                             <div key={i} className="text-center space-y-2">
                                                 <div className="w-10 h-10 mx-auto bg-secondary rounded-full flex items-center justify-center">
@@ -455,7 +455,7 @@ export default function ProductDetailPage() {
                                                 </div>
                                                 <div className="text-[10px] uppercase tracking-wide font-medium">
                                                     <p>{item.line1}</p>
-                                                    <p className="text-muted-foreground normal-case tracking-normal text-[10px]">{item.line2}</p>
+                                                    {item.line2 && <p className="text-muted-foreground normal-case tracking-normal text-[10px]">{item.line2}</p>}
                                                 </div>
                                             </div>
                                         ))}
@@ -466,7 +466,7 @@ export default function ProductDetailPage() {
                                         <Accordion type="single" collapsible className="w-full">
                                             {(product.detailsCare && product.detailsCare.length > 0) || product.description ? (
                                             <AccordionItem value="details">
-                                                <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Details & Care</AccordionTrigger>
+                                                <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Receive & Returns</AccordionTrigger>
                                                 <AccordionContent>
                                                     {product.detailsCare && product.detailsCare.length > 0 ? (
                                                         <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-4 py-2">
@@ -512,9 +512,8 @@ export default function ProductDetailPage() {
                             <div className="flex items-end justify-between mb-10">
                                 <div>
                                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground font-display uppercase tracking-wider">
-                                        Complete the Look
+                                        WARDROBE OF GODS
                                     </h2>
-                                    <p className="text-xs text-muted-foreground tracking-widest mt-2 uppercase">Curated recommendations based on your style</p>
                                 </div>
                                 <Link href="/shop" className="hidden lg:inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] hover:text-muted-foreground transition-colors">
                                     View All <ArrowLeft size={14} className="rotate-180" />

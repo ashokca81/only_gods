@@ -31,6 +31,16 @@ export function slideHref(s: CarouselSlide): string {
   return s.category ? `/shop?category=${encodeURIComponent(s.category)}` : '/shop';
 }
 
+/** Desktop visibility flag for the carousel (mobile is always shown). */
+export interface CarouselFlags {
+  desktopEnabled: boolean;
+}
+export const DEFAULT_CAROUSEL_FLAGS: CarouselFlags = { desktopEnabled: true };
+export function mergeCarouselFlags(value: unknown): CarouselFlags {
+  const v = (value ?? {}) as Partial<CarouselFlags>;
+  return { desktopEnabled: v.desktopEnabled !== false }; // default ON
+}
+
 export function mergeCarousel(value: unknown): CarouselSlide[] {
   if (!Array.isArray(value)) return DEFAULT_CAROUSEL;
   const list: CarouselSlide[] = [];

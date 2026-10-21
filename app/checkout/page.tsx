@@ -181,9 +181,9 @@ export default function CheckoutPage() {
           <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6">
             <ShoppingBag size={32} className="text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">Your Cart is Empty</h1>
+          <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">God&apos;s Taste Starts Here.</h1>
           <Link href="/shop" className="mt-4 px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl">
-            Start Shopping
+            Explore Collection
           </Link>
         </div>
         <Footer />

@@ -10,7 +10,7 @@ const Footer = () => {
   const socials = f.socials.filter((s) => s.enabled && SOCIAL_ICONS[s.icon]);
 
   return (
-    <footer className="bg-white text-black dark:bg-black dark:text-white font-sans relative mt-16 pt-12 border-t border-neutral-200 dark:border-neutral-800">
+    <footer className="bg-white text-black dark:bg-black dark:text-white font-sans relative mt-16 pt-12">
 
       <div className="container mx-auto px-2 md:px-6 pb-8">
 

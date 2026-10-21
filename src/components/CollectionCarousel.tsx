@@ -7,7 +7,7 @@ import { useCarousel } from '@/hooks/useCarousel';
 import { slideHref } from '@/lib/carousel';
 
 export default function CollectionCarousel() {
-  const slides = useCarousel();
+  const { slides, desktopEnabled } = useCarousel();
   const n = slides.length;
   const [index, setIndex] = useState(0);
   const touchX = useRef<number | null>(null);
@@ -22,6 +22,7 @@ export default function CollectionCarousel() {
   return (
     <>
       {/* DESKTOP: full-screen auto-playing carousel */}
+      {desktopEnabled && (
       <section
         data-nav="dark"
         className="hidden lg:block relative w-full h-[72vh] overflow-hidden bg-black"
@@ -66,6 +67,7 @@ export default function CollectionCarousel() {
           </>
         )}
       </section>
+      )}
 
       {/* MOBILE: 3D stacked carousel */}
       <section
