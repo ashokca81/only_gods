@@ -73,6 +73,9 @@ export const DEFAULT_FOOTER: FooterConfig = {
   legalLinks: [
     { label: 'Terms & Conditions', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Cancellation & Refund', href: '/refund' },
+    { label: 'Shipping Policy', href: '/shipping' },
+    { label: 'Contact Us', href: '/contact' },
     { label: 'Cookies', href: '/cookies' },
   ],
   copyright: '© 2026 Only Gods. All rights reserved.',

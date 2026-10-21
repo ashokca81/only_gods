@@ -13,7 +13,7 @@ export interface PageContent {
   sections: PageSection[];
 }
 
-export const PAGE_SLUGS = ['about', 'events', 'faq', 'terms', 'privacy', 'cookies'] as const;
+export const PAGE_SLUGS = ['about', 'events', 'faq', 'terms', 'privacy', 'cookies', 'refund', 'shipping', 'contact'] as const;
 export type PageSlug = (typeof PAGE_SLUGS)[number];
 
 export function isPageSlug(s: string): s is PageSlug {
@@ -28,6 +28,9 @@ export const PAGE_META: Record<PageSlug, { label: string; href: string }> = {
   terms: { label: 'Terms & Conditions', href: '/terms' },
   privacy: { label: 'Privacy Policy', href: '/privacy' },
   cookies: { label: 'Cookies', href: '/cookies' },
+  refund: { label: 'Cancellation & Refund', href: '/refund' },
+  shipping: { label: 'Shipping Policy', href: '/shipping' },
+  contact: { label: 'Contact Us', href: '/contact' },
 };
 
 export const DEFAULT_PAGES: Record<PageSlug, PageContent> = {
@@ -87,6 +90,38 @@ export const DEFAULT_PAGES: Record<PageSlug, PageContent> = {
       { heading: 'What Are Cookies', body: 'Cookies are small files stored on your device that help the website remember your preferences and keep you logged in.' },
       { heading: 'How We Use Cookies', body: 'We use essential cookies for cart and login, and optional cookies to understand how the site is used so we can improve it.' },
       { heading: 'Managing Cookies', body: 'You can control or delete cookies through your browser settings. Disabling essential cookies may affect site functionality.' },
+    ],
+  },
+  refund: {
+    title: 'Cancellation & Refund Policy',
+    intro: 'This policy explains how cancellations, returns and refunds work at ONLY GODS.',
+    sections: [
+      { heading: 'Cancellations', body: 'Orders can be cancelled before they are dispatched by emailing info@onlygods.com with your order number. Once an order has been shipped, it can no longer be cancelled.' },
+      { heading: 'Returns', body: 'Eligible items can be returned within 7 days of delivery if they are unused, unwashed and in original condition with all tags attached. You can start a return from your profile under “My Orders”.' },
+      { heading: 'Refunds', body: 'Once your return is received and inspected, approved refunds are processed to the original payment method within 5–7 business days. Cash-on-Delivery orders are refunded via UPI or bank transfer.' },
+      { heading: 'Non-returnable Items', body: 'Innerwear, items marked “final sale”, and products damaged due to misuse are not eligible for return.' },
+      { heading: 'Contact', body: 'For any cancellation or refund query, email info@onlygods.com or call +91 90005 49009.' },
+    ],
+  },
+  shipping: {
+    title: 'Shipping & Delivery Policy',
+    intro: 'How and when your ONLY GODS order reaches you.',
+    sections: [
+      { heading: 'Order Processing', body: 'Orders are processed and dispatched within 1–2 business days of being placed.' },
+      { heading: 'Delivery Time', body: 'Delivery usually takes 4–7 business days across India, depending on your location. Timelines are estimates and may vary due to factors outside our control.' },
+      { heading: 'Shipping Charges', body: 'Standard shipping is free on orders above ₹2,000. A flat shipping fee of ₹99 applies to orders below ₹2,000.' },
+      { heading: 'Order Tracking', body: 'Once your order is dispatched, a tracking link appears in your profile under “My Orders”.' },
+      { heading: 'Contact', body: 'For any shipping query, email info@onlygods.com or call +91 90005 49009.' },
+    ],
+  },
+  contact: {
+    title: 'Contact Us',
+    intro: 'We would love to hear from you. Reach us through any of the details below.',
+    sections: [
+      { heading: 'Email', body: 'info@onlygods.com' },
+      { heading: 'Phone', body: '+91 90005 49009' },
+      { heading: 'Address', body: 'ONLY GODS, Vijayawada, Andhra Pradesh, India.' },
+      { heading: 'Business Hours', body: 'Monday to Saturday, 10:00 AM – 7:00 PM IST.' },
     ],
   },
 };
