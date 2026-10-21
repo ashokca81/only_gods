@@ -73,10 +73,30 @@ const gillSans = localFont({
     display: 'swap',
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theonlygods.com';
+const SITE_NAME = 'ONLY GODS';
+const SITE_TITLE = 'ONLY GODS - Premium Fashion & Lifestyle';
+const SITE_DESC = 'Exclusive pieces designed for the elite. Premium quality, limited editions.';
+
 export const metadata: Metadata = {
-    title: 'ONLY GODS - Premium Fashion & Lifestyle',
-    description: 'Exclusive pieces designed for the elite. Premium quality, limited editions.',
+    metadataBase: new URL(SITE_URL),
+    title: SITE_TITLE,
+    description: SITE_DESC,
     keywords: ['fashion', 'luxury', 'premium', 'clothing', 'lifestyle'],
+    openGraph: {
+        type: 'website',
+        siteName: SITE_NAME,
+        title: SITE_TITLE,
+        description: SITE_DESC,
+        url: SITE_URL,
+        images: [{ url: '/dark_logo.png', width: 1200, height: 630, alt: SITE_NAME }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: SITE_TITLE,
+        description: SITE_DESC,
+        images: ['/dark_logo.png'],
+    },
 };
 
 export default function RootLayout({
