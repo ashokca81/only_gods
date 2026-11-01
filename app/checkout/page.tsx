@@ -129,6 +129,20 @@ export default function CheckoutPage() {
     setForm((f) => ({ ...empty, name: customer?.name || '', phone: customer?.phone || '', email: f.email }));
   };
 
+  // Back from PayU without an order (?payment=...) — explain what happened.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('payment');
+    if (!p) return;
+    const msg: Record<string, string> = {
+      failed: 'Payment was not completed. Please try again or choose Cash on Delivery.',
+      invalid: 'We could not verify the payment. If money was deducted, it will be refunded — or contact us.',
+      paid_no_order: 'We received your payment but could not create the order. Our team will contact you or refund it.',
+      pending: 'Your payment is being confirmed. Please check My Orders in a minute.',
+    };
+    setError(msg[p] ?? msg.failed);
+    window.history.replaceState(null, '', '/checkout');
+  }, []);
+
   // Load the dashboard-managed COD Terms text once.
   useEffect(() => {
     let alive = true;
@@ -217,16 +231,6 @@ export default function CheckoutPage() {
   });
   const itemsPayload = () => items.map((i) => ({ id: i.id, quantity: i.quantity, size: i.size, color: i.color }));
 
-  const loadRazorpay = () =>
-    new Promise<boolean>((resolve) => {
-      if (typeof window !== 'undefined' && (window as unknown as { Razorpay?: unknown }).Razorpay) return resolve(true);
-      const s = document.createElement('script');
-      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      s.onload = () => resolve(true);
-      s.onerror = () => resolve(false);
-      document.body.appendChild(s);
-    });
-
   const finishOrder = (data: { order_no?: string; total?: number }) => {
     clear();
     router.push(`/order/${data.order_no}?total=${data.total ?? total}`);
@@ -242,41 +246,27 @@ export default function CheckoutPage() {
     finishOrder(data);
   };
 
+  // PayU hosted checkout: save the cart server-side, then POST the browser to PayU.
+  // PayU sends the customer back to /api/payment/payu/return, which creates the order.
   const payOnline = async (): Promise<boolean> => {
-    const ok = await loadRazorpay();
-    if (!ok) { setError('Could not load the payment gateway. Try again.'); return false; }
-    const res = await fetch('/api/payment/create-order', {
+    const res = await fetch('/api/payment/payu/initiate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: itemsPayload(), coupon: coupon?.code ?? null }),
+      body: JSON.stringify({ customer: customerPayload(), items: itemsPayload(), coupon: coupon?.code ?? null }),
     });
     const o = await res.json();
     if (!res.ok) { if (res.status === 401) openAuthModal(); setError(o.error || 'Could not start payment.'); return false; }
 
-    const rzp = new (window as unknown as { Razorpay: new (opts: Record<string, unknown>) => { open: () => void } }).Razorpay({
-      key: o.keyId,
-      order_id: o.razorpayOrderId,
-      amount: o.amount,
-      currency: 'INR',
-      name: 'ONLY GODS',
-      description: 'Order payment',
-      prefill: { name: form.name.trim(), contact: form.phone.trim(), email: form.email.trim() },
-      theme: { color: '#0f172a' },
-      handler: async (resp: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-        setPlacing(true);
-        try {
-          const vr = await fetch('/api/payment/verify', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...resp, customer: customerPayload(), items: itemsPayload(), coupon: coupon?.code ?? null }),
-          });
-          const data = await vr.json();
-          if (!vr.ok) { setError(data.error || 'Payment verification failed.'); return; }
-          finishOrder(data);
-        } finally { setPlacing(false); }
-      },
-      modal: { ondismiss: () => setPlacing(false) },
-    });
-    rzp.open();
-    return true; // modal opened; its handlers manage the placing state
+    const formEl = document.createElement('form');
+    formEl.method = 'POST';
+    formEl.action = o.action;
+    for (const [k, v] of Object.entries(o.fields as Record<string, string>)) {
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = k; input.value = v;
+      formEl.appendChild(input);
+    }
+    document.body.appendChild(formEl);
+    formEl.submit(); // leaves the site for PayU; keep the "Processing…" state
+    return true;
   };
 
   // Actually place the order (after validation / COD terms are accepted).
