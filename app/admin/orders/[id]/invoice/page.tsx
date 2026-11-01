@@ -25,7 +25,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const [{ data: o }, { data: gstRow }] = await Promise.all([
     supabase!
       .from('orders')
-      .select('order_no, customer_name, customer_phone, customer_email, address_line, city, state, pincode, status, payment_method, subtotal, shipping, discount, coupon_code, total, created_at, order_items(name, price, quantity, size, color, hsn, gst_rate)')
+      .select('order_no, customer_name, customer_phone, customer_email, address_line, city, state, pincode, status, payment_method, subtotal, shipping, discount, advance_paid, coupon_code, total, created_at, order_items(name, price, quantity, size, color, hsn, gst_rate)')
       .eq('id', id)
       .single(),
     supabase!.from('settings').select('value').eq('key', 'store_gst').single(),
@@ -151,10 +151,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 ))}
               </>
             )}
-            <Row label="Shipping" value={Number(o.shipping) === 0 ? 'Free' : formatPrice(Number(o.shipping))} />
+            {Number(o.shipping) > 0 && <Row label="Shipping" value={formatPrice(Number(o.shipping))} />}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '12px 14px', background: NAVY, color: '#fff', borderRadius: 8, fontWeight: 800, fontSize: 16 }}>
               <span>TOTAL</span><span>{formatPrice(Number(o.total))}</span>
             </div>
+            {Number(o.advance_paid) > 0 && (
+              <>
+                <Row label="Advance paid (online)" value={formatPrice(Number(o.advance_paid))} />
+                <Row label="Balance — pay on delivery" value={formatPrice(Math.max(0, Number(o.total) - Number(o.advance_paid)))} />
+              </>
+            )}
           </div>
         </div>
 

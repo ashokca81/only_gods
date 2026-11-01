@@ -14,6 +14,10 @@ function Confirmation() {
   const orderNo = params?.orderNo as string;
   const totalParam = search.get('total');
   const total = totalParam ? Number(totalParam) : null;
+  const paidParam = search.get('paid');
+  const paid = paidParam ? Number(paidParam) : 0;
+  const fullyPaid = total != null && paid > 0 && paid >= total;
+  const due = total != null ? Math.max(0, total - paid) : null;
 
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-0 flex flex-col">
@@ -37,13 +41,25 @@ function Confirmation() {
             </div>
             {total != null && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total (COD)</span>
+                <span className="text-muted-foreground">{fullyPaid || paid > 0 ? 'Order total' : 'Total (COD)'}</span>
                 <span className="font-bold">{formatPrice(total)}</span>
               </div>
             )}
+            {paid > 0 && !fullyPaid && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Advance paid</span>
+                  <span className="font-medium text-emerald-600">{formatPrice(paid)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Pay on delivery</span>
+                  <span className="font-bold">{formatPrice(due ?? 0)}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Payment</span>
-              <span className="font-medium">Cash on Delivery</span>
+              <span className="font-medium">{fullyPaid ? 'Paid online' : paid > 0 ? 'Advance paid · Cash on Delivery' : 'Cash on Delivery'}</span>
             </div>
           </div>
 

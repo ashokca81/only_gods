@@ -30,6 +30,9 @@ export interface ProductRow {
   variants?: Variant[] | null;
   details_care?: string[] | null;
   shipping_returns?: string | null;
+  shipping_charge?: number | null;
+  cod_advance?: number | null;
+  price_build?: boolean | null;
   size_guide_image?: string | null;
 }
 
@@ -53,6 +56,7 @@ export function rowToProduct(row: ProductRow): Product {
     description: row.description ?? '',
     detailsCare: row.details_care ?? [],
     shippingReturns: row.shipping_returns ?? '',
+    codAdvance: Number(row.cod_advance) || 0,
     sizeGuideImage: row.size_guide_image ?? undefined,
     trending: row.trending ?? false,
     newArrival: row.new_arrival ?? false,

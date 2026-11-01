@@ -13,8 +13,8 @@ import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 export default function CartPage() {
     useScrollRestoration();
     const { items, updateQty, removeItem, subtotal, ready } = useCart();
-    const shipping = subtotal >= 2000 || subtotal === 0 ? 0 : 99;
-    const total = subtotal + shipping;
+    // Shipping + GST are already inside each product's price.
+    const total = subtotal;
 
     if (ready && items.length === 0) {
         return (
@@ -130,10 +130,6 @@ export default function CartPage() {
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Subtotal</span>
                                             <span className="font-medium">{formatPrice(subtotal)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Shipping</span>
-                                            <span className="font-medium">{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                                         </div>
                                         <div className="border-t border-border pt-4 flex justify-between text-lg font-bold items-end">
                                             <span>Total</span>

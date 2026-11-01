@@ -10,7 +10,8 @@ export interface VariantSize {
 export interface Variant {
   color: string; // hex (e.g. "#1e40af") or css colour name (legacy "Black")
   name?: string; // optional human label
-  price: number;
+  price: number;          // what the customer pays
+  base_price?: number;    // price builder: admin's price before shipping + GST
   original_price: number | null;
   images: string[];
   sizes: VariantSize[];

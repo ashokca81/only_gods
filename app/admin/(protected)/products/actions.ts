@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { deriveFromVariants, type Variant } from '@/lib/variants';
+import { mergeGst } from '@/lib/gst';
+import { customerPrice } from '@/lib/pricing';
 
 export interface ProductInput {
   name: string;
@@ -27,6 +29,9 @@ export interface ProductInput {
   description: string;
   details_care: string[];
   shipping_returns: string | null;
+  shipping_charge?: number;
+  cod_advance?: number;
+  price_build?: boolean;
   size_guide_image: string | null;
   trending: boolean;
   new_arrival: boolean;
@@ -61,8 +66,27 @@ function withDerived(input: ProductInput): ProductInput {
   };
 }
 
+/** Store default GST % (used when a product's GST rate is blank). */
+export async function getStoreGstRate(): Promise<number> {
+  const supabase = await client();
+  const { data } = await supabase.from('settings').select('value').eq('key', 'store_gst').maybeSingle();
+  return mergeGst(data?.value).default_rate;
+}
+
+/** Price builder ON: each variant's customer price = (base + shipping) + GST. */
+async function withBuiltPrices(input: ProductInput): Promise<ProductInput> {
+  if (!input.price_build) return input;
+  const rate = input.gst_rate ?? (await getStoreGstRate());
+  const shipping = Math.max(0, Number(input.shipping_charge) || 0);
+  const variants = (input.variants ?? []).map((v) => {
+    const base = v.base_price ?? v.price;
+    return { ...v, base_price: base, price: customerPrice(base, shipping, rate) };
+  });
+  return { ...input, shipping_charge: shipping, variants };
+}
+
 export async function createProduct(inputRaw: ProductInput): Promise<Result> {
-  const input = withDerived(inputRaw);
+  const input = withDerived(await withBuiltPrices(inputRaw));
   const supabase = await client();
   const { error } = await supabase.from('products').insert(input);
   if (error) return { ok: false, error: error.message };
@@ -88,7 +112,7 @@ export async function updateProduct(
   id: string,
   inputRaw: ProductInput
 ): Promise<Result> {
-  const input = withDerived(inputRaw);
+  const input = withDerived(await withBuiltPrices(inputRaw));
   const supabase = await client();
   const { error } = await supabase.from('products').update(input).eq('id', id);
   if (error) return { ok: false, error: error.message };

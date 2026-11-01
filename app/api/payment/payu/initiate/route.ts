@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 /**
  * Start a PayU payment. Saves the cart server-side (the customer leaves the
  * site), then returns the fields the browser must POST to PayU.
- * Body: { customer, items, coupon }
+ * Body: { customer, items, coupon, purpose? }  purpose 'cod_advance' = pay only the COD advance.
  */
 export async function POST(req: Request) {
   if (!isPayuConfigured) {
@@ -19,7 +19,8 @@ export async function POST(req: Request) {
   const cid = await getCustomerId();
   if (!cid) return NextResponse.json({ error: 'Please log in to pay' }, { status: 401 });
 
-  const { customer, items, coupon } = await req.json().catch(() => ({}));
+  const { customer, items, coupon, purpose: purposeIn } = await req.json().catch(() => ({}));
+  const purpose = purposeIn === 'cod_advance' ? 'cod_advance' : 'full';
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Your cart is empty' }, { status: 400 });
   }
@@ -37,7 +38,14 @@ export async function POST(req: Request) {
   const q = quote as { error?: string; total?: number };
   if (q?.error || !q?.total) return NextResponse.json({ error: q?.error || 'Your cart is empty or invalid' }, { status: 400 });
 
-  const amount = Number(q.total).toFixed(2);
+  let charge = Number(q.total);
+  if (purpose === 'cod_advance') {
+    const { data: adv, error: advErr } = await supabase.rpc('cod_advance_quote', { items });
+    if (advErr) return NextResponse.json({ error: advErr.message }, { status: 400 });
+    charge = Math.min(Number(adv) || 0, charge);
+    if (charge <= 0) return NextResponse.json({ error: 'No advance is needed for this order' }, { status: 400 });
+  }
+  const amount = charge.toFixed(2);
   const txnid = `OG${Date.now()}${crypto.randomBytes(3).toString('hex')}`.toUpperCase();
 
   const c = (customer ?? {}) as { name?: string; email?: string; phone?: string };
@@ -45,11 +53,11 @@ export async function POST(req: Request) {
   const firstname = (String(c.name || cust?.name || 'Customer').replace(/[^A-Za-z0-9 .]/g, '').trim() || 'Customer').slice(0, 60);
   const emailIn = String(c.email || '').trim();
   const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailIn) ? emailIn : 'orders@theonlygods.com';
-  const productinfo = 'ONLY GODS Order';
+  const productinfo = purpose === 'cod_advance' ? 'ONLY GODS COD Advance' : 'ONLY GODS Order';
 
   try {
     await callRpc('payu_create', {
-      p_txnid: txnid, p_cid: cid, p_payload: { customer, items, coupon: coupon || null }, p_amount: Number(amount),
+      p_txnid: txnid, p_cid: cid, p_payload: { customer, items, coupon: coupon || null, purpose }, p_amount: Number(amount),
     });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Could not start payment' }, { status: 500 });

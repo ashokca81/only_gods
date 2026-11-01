@@ -438,6 +438,12 @@ export default function ProductDetailPage() {
                                         </button>
                                     )}
 
+                                    {(product.codAdvance ?? 0) > 0 && (
+                                        <p className="text-xs text-muted-foreground pt-4">
+                                            💵 Cash on Delivery available · pay {formatPrice(product.codAdvance ?? 0)} advance to book, rest on delivery
+                                        </p>
+                                    )}
+
                                     {/* Feature Badges */}
                                     <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
                                         {[
@@ -481,7 +487,7 @@ export default function ProductDetailPage() {
                                                         {product.shippingReturns && product.shippingReturns.trim()
                                                             ? product.shippingReturns.split('\n').filter((l) => l.trim()).map((l, i) => <p key={i}>{l}</p>)
                                                             : (<>
-                                                                <p>Free standard shipping on all orders over ₹2,000. Orders are processed within 1-2 business days.</p>
+                                                                <p>Shipping and taxes are included in the price. Orders are processed within 1-2 business days.</p>
                                                                 <p>We accept returns within 30 days of delivery. Items must be unworn and in original condition with tags attached.</p>
                                                               </>)}
                                                     </div>

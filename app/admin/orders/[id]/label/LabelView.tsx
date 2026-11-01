@@ -25,6 +25,7 @@ export interface LabelOrder {
   pincode: string | null;
   payment_method: string;
   total: number;
+  advance_paid?: number | null;
   created_at: string;
   order_items: LabelItem[];
 }
@@ -122,7 +123,7 @@ export default function LabelView({
           {isCod ? (
             <>
               <span className="paylabel">CASH ON DELIVERY</span>
-              <span className="payamt">COLLECT {formatPrice(Number(order.total))}</span>
+              <span className="payamt">COLLECT {formatPrice(Math.max(0, Number(order.total) - (Number(order.advance_paid) || 0)))}</span>
             </>
           ) : (
             <>

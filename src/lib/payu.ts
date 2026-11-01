@@ -71,7 +71,7 @@ async function verifyWithPayu(txnid: string): Promise<'success' | 'not_success' 
 }
 
 export type FinalizeResult =
-  | { ok: true; orderNo: string; total: number }
+  | { ok: true; orderNo: string; total: number; paid: number }
   | { ok: false; reason: 'failed' | 'invalid' | 'paid_no_order' | 'pending'; message: string };
 
 /**
@@ -91,10 +91,11 @@ export async function finalizePayu(f: Record<string, string>): Promise<FinalizeR
   }
 
   // Already finalized (e.g. the webhook got here first)?
-  const existing = await callRpc<{ status: string; order_no: string | null; amount: number } | null>('payu_get', { p_txnid: txnid });
+  type PayuRow = { status: string; order_no: string | null; amount: number; order_total?: number };
+  const existing = await callRpc<PayuRow | null>('payu_get', { p_txnid: txnid });
   if (!existing) return { ok: false, reason: 'invalid', message: 'Unknown payment.' };
   if (existing.status === 'paid' && existing.order_no) {
-    return { ok: true, orderNo: existing.order_no, total: Number(existing.amount) };
+    return { ok: true, orderNo: existing.order_no, total: Number(existing.order_total ?? existing.amount), paid: Number(existing.amount) };
   }
 
   // Amount must match what we asked PayU to collect.
@@ -107,27 +108,43 @@ export async function finalizePayu(f: Record<string, string>): Promise<FinalizeR
     return { ok: false, reason: 'failed', message: 'Payment was not confirmed by PayU.' };
   }
 
-  const claim = await callRpc<{ customer_id: string; payload: { customer: unknown; items: unknown; coupon: string | null }; amount: number } | null>(
+  const claim = await callRpc<{ customer_id: string; payload: { customer: unknown; items: unknown; coupon: string | null; purpose?: string }; amount: number } | null>(
     'payu_claim', { p_txnid: txnid },
   );
   if (!claim) {
     // Someone else is finishing it right now — report the current state.
-    const now = await callRpc<{ status: string; order_no: string | null; amount: number } | null>('payu_get', { p_txnid: txnid });
-    if (now?.order_no) return { ok: true, orderNo: now.order_no, total: Number(now.amount) };
+    const now = await callRpc<PayuRow | null>('payu_get', { p_txnid: txnid });
+    if (now?.order_no) return { ok: true, orderNo: now.order_no, total: Number(now.order_total ?? now.amount), paid: Number(now.amount) };
     return { ok: false, reason: 'pending', message: 'Your payment is being confirmed. Please check My Orders in a minute.' };
   }
 
   const supabase = await getServerSupabase();
   if (!supabase) return { ok: false, reason: 'pending', message: 'Store not configured.' };
 
-  const { data, error } = await supabase.rpc('place_order', {
-    customer: claim.payload.customer,
-    items: claim.payload.items,
-    payment: 'prepaid',
-    p_customer_id: claim.customer_id,
-    p_coupon: claim.payload.coupon || null,
-  });
+  // COD advance: the advance is paid now, the order is booked as COD for the balance.
+  const isAdvance = claim.payload.purpose === 'cod_advance';
+  let data: unknown = null;
+  let error: { message: string } | null = null;
+  if (isAdvance) {
+    try {
+      data = await callRpc('place_order_advance', {
+        customer: claim.payload.customer, items: claim.payload.items,
+        p_customer_id: claim.customer_id, p_coupon: claim.payload.coupon || null,
+      });
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : 'place_order_advance failed' };
+    }
+  } else {
+    ({ data, error } = await supabase.rpc('place_order', {
+      customer: claim.payload.customer,
+      items: claim.payload.items,
+      payment: 'prepaid',
+      p_customer_id: claim.customer_id,
+      p_coupon: claim.payload.coupon || null,
+    }));
+  }
   const orderNo = (data as { order_no?: string } | null)?.order_no;
+  const orderTotal = Number((data as { total?: number } | null)?.total ?? claim.amount);
 
   if (error || !orderNo) {
     // Money received but the order could not be created (e.g. stock ran out) — flag for a refund.
@@ -143,7 +160,7 @@ export async function finalizePayu(f: Record<string, string>): Promise<FinalizeR
   });
   try { await callRpc('cart_clear', { p_cid: claim.customer_id }); } catch { /* non-critical */ }
 
-  return { ok: true, orderNo, total: Number(claim.amount) };
+  return { ok: true, orderNo, total: orderTotal, paid: Number(claim.amount) };
 }
 
 /** Parse a PayU POST body (form-encoded or JSON) into a flat string map. */

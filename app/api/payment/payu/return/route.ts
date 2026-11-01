@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const result = await finalizePayu(fields);
 
   if (result.ok) {
-    return NextResponse.redirect(`${origin}/order/${encodeURIComponent(result.orderNo)}?total=${result.total}`, 303);
+    return NextResponse.redirect(`${origin}/order/${encodeURIComponent(result.orderNo)}?total=${result.total}&paid=${result.paid}`, 303);
   }
   const reason = result.reason === 'failed' ? 'failed' : result.reason;
   return NextResponse.redirect(`${origin}/checkout?payment=${reason}`, 303);

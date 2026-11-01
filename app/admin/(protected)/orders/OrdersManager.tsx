@@ -46,6 +46,7 @@ export interface OrderRow {
   subtotal: number;
   shipping: number;
   discount: number | null;
+  advance_paid?: number | null;
   coupon_code: string | null;
   total: number;
   created_at: string;
@@ -510,8 +511,14 @@ export default function OrdersManager({
                                 <span>− {formatPrice(Number(o.discount))}</span>
                               </div>
                             )}
-                            <div className="flex justify-between"><span className="text-neutral-500">Shipping</span><span>{Number(o.shipping) === 0 ? 'Free' : formatPrice(Number(o.shipping))}</span></div>
+                            {Number(o.shipping) > 0 && <div className="flex justify-between"><span className="text-neutral-500">Shipping</span><span>{formatPrice(Number(o.shipping))}</span></div>}
                             <div className="flex justify-between font-bold"><span>Total</span><span>{formatPrice(Number(o.total))}</span></div>
+                            {Number(o.advance_paid) > 0 && (
+                              <>
+                                <div className="flex justify-between text-emerald-600"><span>Advance paid (online)</span><span>{formatPrice(Number(o.advance_paid))}</span></div>
+                                <div className="flex justify-between font-bold text-orange-600"><span>Collect on delivery</span><span>{formatPrice(Math.max(0, Number(o.total) - Number(o.advance_paid)))}</span></div>
+                              </>
+                            )}
                             {(() => {
                               const items = o.order_items ?? [];
                               const known = items.filter((i) => i.cost != null);
@@ -529,6 +536,9 @@ export default function OrdersManager({
                               <span className="text-neutral-500">Payment</span>
                               <span className="inline-flex items-center gap-1.5">
                                 <span className="uppercase">{o.payment_method}</span>
+                                {o.payment_status === 'advance' && (
+                                  <span className="rounded-[5px] bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 uppercase">Advance ✓</span>
+                                )}
                                 {o.payment_status === 'paid' && (
                                   <span className="rounded-[5px] bg-emerald-50 text-emerald-600 text-[10px] font-bold px-1.5 py-0.5 uppercase">Paid ✓</span>
                                 )}

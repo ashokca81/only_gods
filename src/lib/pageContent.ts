@@ -109,7 +109,7 @@ export const DEFAULT_PAGES: Record<PageSlug, PageContent> = {
     sections: [
       { heading: 'Order Processing', body: 'Orders are processed and dispatched within 1–2 business days of being placed.' },
       { heading: 'Delivery Time', body: 'Delivery usually takes 4–7 business days across India, depending on your location. Timelines are estimates and may vary due to factors outside our control.' },
-      { heading: 'Shipping Charges', body: 'Standard shipping is free on orders above ₹2,000. A flat shipping fee of ₹99 applies to orders below ₹2,000.' },
+      { heading: 'Shipping Charges', body: 'Shipping charges and taxes are included in each product price — there is no extra shipping fee at checkout.' },
       { heading: 'Order Tracking', body: 'Once your order is dispatched, a tracking link appears in your profile under “My Orders”.' },
       { heading: 'Contact', body: 'For any shipping query, email info@onlygods.com or call +91 90005 49009.' },
     ],

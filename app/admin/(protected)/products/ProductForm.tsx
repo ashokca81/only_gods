@@ -7,7 +7,8 @@ import {
   ArrowLeft, Upload, Plus, X, Video as VideoIcon, Loader2, Check as CheckIcon, Trash2,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
-import { createProduct, updateProduct, type ProductInput } from './actions';
+import { createProduct, updateProduct, getStoreGstRate, type ProductInput } from './actions';
+import { customerPrice } from '@/lib/pricing';
 import type { Variant } from '@/lib/variants';
 import InfoCard from '../../_components/InfoCard';
 import ImageCropper from '@/components/admin/ImageCropper';
@@ -47,6 +48,13 @@ export default function ProductForm({
   const [customColor, setCustomColor] = useState('#3b82f6');
   const [tagInput, setTagInput] = useState('');
   const [previewIdx, setPreviewIdx] = useState(0);
+  const [storeGst, setStoreGst] = useState(5);
+  useEffect(() => { getStoreGstRate().then(setStoreGst).catch(() => { /* keep default */ }); }, []);
+  // Price builder: customer price = (product price + shipping) + GST.
+  const gstRate = form.gst_rate ?? storeGst;
+  const toCustomer = (v: Variant) => form.price_build
+    ? customerPrice(v.base_price ?? v.price, form.shipping_charge ?? 0, gstRate)
+    : v.price;
 
   // Dashboard-managed categories (shared with Shop filters & Collections page).
   const [cats, setCats] = useState<string[]>([]);
@@ -172,8 +180,8 @@ export default function ProductForm({
   };
 
   const pv = form.variants[previewIdx] ?? form.variants[0];
-  const pvDiscount = pv && pv.original_price && pv.original_price > pv.price
-    ? Math.round((1 - pv.price / pv.original_price) * 100) : 0;
+  const pvDiscount = pv && pv.original_price && pv.original_price > toCustomer(pv)
+    ? Math.round((1 - toCustomer(pv) / pv.original_price) * 100) : 0;
 
   return (
     <div className="max-w-6xl">
@@ -302,8 +310,30 @@ export default function ProductForm({
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="HSN code (GST)"><input className="inp" value={form.hsn ?? ''} onChange={(e) => set('hsn', e.target.value || null)} placeholder="6109" /></Field>
-              <Field label="GST rate % (blank = store default)"><input className="inp" type="number" min={0} value={form.gst_rate ?? ''} onChange={(e) => set('gst_rate', e.target.value === '' ? null : Math.max(0, Number(e.target.value) || 0))} placeholder="5" /></Field>
+              <Field label="GST rate % (blank = store default)"><input className="inp" type="number" min={0} value={form.gst_rate ?? ''} onChange={(e) => set('gst_rate', e.target.value === '' ? null : Math.max(0, Number(e.target.value) || 0))} placeholder={String(storeGst)} /></Field>
             </div>
+            <div className="rounded-[5px] border border-neutral-200 bg-neutral-50 p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={!!form.price_build} onChange={(e) => set('price_build', e.target.checked)} className="h-4 w-4 accent-black" />
+                Add shipping + GST to my price (customer sees one total price)
+              </label>
+              {form.price_build && (
+                <>
+                  <Field label="Shipping charge per item (₹) — never shown separately to customers">
+                    <input className="inp" type="number" min={0} value={form.shipping_charge ?? 0} onChange={(e) => set('shipping_charge', Math.max(0, Number(e.target.value) || 0))} placeholder="e.g. 99" />
+                  </Field>
+                  {pv && (
+                    <p className="text-xs text-neutral-600">
+                      ({formatPrice(pv.base_price ?? pv.price)} + {formatPrice(form.shipping_charge ?? 0)} shipping) + {gstRate}% GST ={' '}
+                      <b className="text-black">Customer sees {formatPrice(toCustomer(pv))}</b>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+            <Field label="COD advance (₹) — customer pays this online first, rest on delivery · 0 = normal COD">
+              <input className="inp" type="number" min={0} value={form.cod_advance ?? 0} onChange={(e) => set('cod_advance', Math.max(0, Number(e.target.value) || 0))} placeholder="e.g. 500" />
+            </Field>
             <Field label="Description"><textarea className="inp resize-none" rows={4} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
             <Field label="Details & Care (one point per line)">
               <textarea
@@ -320,7 +350,7 @@ export default function ProductForm({
                 rows={4}
                 value={form.shipping_returns ?? ''}
                 onChange={(e) => set('shipping_returns', e.target.value || null)}
-                placeholder={'Free standard shipping on orders over ₹2,000. Processed in 1-2 business days.\nReturns accepted within 30 days — unworn, with tags.'}
+                placeholder={'Shipping & taxes included in the price. Processed in 1-2 business days.\nReturns accepted within 30 days — unworn, with tags.'}
               />
             </Field>
             <Field label="Size Guide image (optional — overrides the Settings default, for this product only)">
@@ -360,6 +390,8 @@ export default function ProductForm({
                       onChange={(patch) => updateVariant(idx, patch)}
                       onRemove={() => removeVariant(idx)}
                       uploadFile={uploadFile}
+                      priceBuild={!!form.price_build}
+                      customerPrice={toCustomer(v)}
                     />
                   ))}
                 </div>
@@ -388,6 +420,8 @@ export default function ProductForm({
                 onChange={(patch) => updateVariant(0, patch)}
                 onRemove={() => {}}
                 uploadFile={uploadFile}
+                priceBuild={!!form.price_build}
+                customerPrice={toCustomer(form.variants[0] ?? newVariant(''))}
               />
             )}
           </Card>
@@ -462,8 +496,8 @@ export default function ProductForm({
                 <p className="font-semibold text-sm truncate">{form.name || 'Product name'}</p>
                 {pv && (
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold">{formatPrice(pv.price)}</span>
-                    {pv.original_price != null && pv.original_price > pv.price && (
+                    <span className="font-bold">{formatPrice(toCustomer(pv))}</span>
+                    {pv.original_price != null && pv.original_price > toCustomer(pv) && (
                       <>
                         <span className="text-xs text-neutral-400 line-through">{formatPrice(pv.original_price)}</span>
                         <span className="text-[10px] font-semibold text-emerald-600">{pvDiscount}% OFF</span>
@@ -507,7 +541,7 @@ export default function ProductForm({
 }
 
 function VariantEditor({
-  variant, active, uploading, hideColor, onPreview, onChange, onRemove, uploadFile,
+  variant, active, uploading, hideColor, onPreview, onChange, onRemove, uploadFile, priceBuild, customerPrice: shownPrice,
 }: {
   index: number;
   variant: Variant;
@@ -518,6 +552,8 @@ function VariantEditor({
   onChange: (patch: Partial<Variant>) => void;
   onRemove: () => void;
   uploadFile: (f: File) => Promise<string | null>;
+  priceBuild?: boolean;
+  customerPrice?: number;
 }) {
   const [sizeInput, setSizeInput] = useState('');
   const [cropQueue, setCropQueue] = useState<File[]>([]);
@@ -558,12 +594,18 @@ function VariantEditor({
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <label className="block">
-          <span className="block text-xs text-neutral-600 mb-1">Price (₹)</span>
-          <input type="number" className="w-full rounded-[5px] border border-neutral-300 px-2 py-1.5 text-sm" value={variant.price}
-            onChange={(e) => onChange({ price: Number(e.target.value) })} />
+          <span className="block text-xs text-neutral-600 mb-1">{priceBuild ? 'Product price (₹) — before shipping & GST' : 'Price (₹)'}</span>
+          {priceBuild ? (
+            <input type="number" className="w-full rounded-[5px] border border-neutral-300 px-2 py-1.5 text-sm" value={variant.base_price ?? variant.price}
+              onChange={(e) => onChange({ base_price: Number(e.target.value) })} />
+          ) : (
+            <input type="number" className="w-full rounded-[5px] border border-neutral-300 px-2 py-1.5 text-sm" value={variant.price}
+              onChange={(e) => onChange({ price: Number(e.target.value) })} />
+          )}
+          {priceBuild && <span className="block text-[11px] text-emerald-700 mt-1">Customer sees {formatPrice(shownPrice ?? 0)}</span>}
         </label>
         <label className="block">
-          <span className="block text-xs text-neutral-600 mb-1">MRP / original (₹)</span>
+          <span className="block text-xs text-neutral-600 mb-1">{priceBuild ? 'MRP (₹) — as the customer sees it' : 'MRP / original (₹)'}</span>
           <input type="number" className="w-full rounded-[5px] border border-neutral-300 px-2 py-1.5 text-sm" value={variant.original_price ?? ''}
             onChange={(e) => onChange({ original_price: e.target.value === '' ? null : Number(e.target.value) })} />
         </label>

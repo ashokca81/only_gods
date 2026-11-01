@@ -18,6 +18,7 @@ export interface Product {
   description: string;
   detailsCare?: string[];     // "Details & Care" bullet points (per product)
   shippingReturns?: string;   // "Shipping & Returns" text (per product)
+  codAdvance?: number;        // ₹ advance to pay online before a COD order (0 = none)
   sizeGuideImage?: string;    // per-product size chart image (falls back to the Settings default)
   trending?: boolean;
   newArrival?: boolean;

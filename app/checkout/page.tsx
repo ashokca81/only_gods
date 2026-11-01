@@ -67,9 +67,26 @@ export default function CheckoutPage() {
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
 
-  const shipping = subtotal >= 2000 || subtotal === 0 ? 0 : 99;
+  // Shipping + GST are already inside each product's price.
   const discount = coupon ? Math.min(coupon.discount, subtotal) : 0;
-  const total = Math.max(0, subtotal - discount) + shipping;
+  const total = Math.max(0, subtotal - discount);
+
+  // COD advance (set per product by admin) — paid online before a COD order is booked.
+  const [codAdvance, setCodAdvance] = useState(0);
+  const advKey = items.map((i) => `${i.id}:${i.quantity}`).join(',');
+  useEffect(() => {
+    if (!advKey) { setCodAdvance(0); return; }
+    let alive = true;
+    fetch('/api/cod-advance', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: items.map((i) => ({ id: i.id, quantity: i.quantity })) }),
+    })
+      .then((r) => r.json())
+      .then((j) => { if (alive) setCodAdvance(Math.min(Number(j?.advance) || 0, total)); })
+      .catch(() => { /* ignore */ });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advKey, total]);
 
   const applyCoupon = async () => {
     const code = couponInput.trim();
@@ -248,10 +265,10 @@ export default function CheckoutPage() {
 
   // PayU hosted checkout: save the cart server-side, then POST the browser to PayU.
   // PayU sends the customer back to /api/payment/payu/return, which creates the order.
-  const payOnline = async (): Promise<boolean> => {
+  const payOnline = async (purpose: 'full' | 'cod_advance' = 'full'): Promise<boolean> => {
     const res = await fetch('/api/payment/payu/initiate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customer: customerPayload(), items: itemsPayload(), coupon: coupon?.code ?? null }),
+      body: JSON.stringify({ customer: customerPayload(), items: itemsPayload(), coupon: coupon?.code ?? null, purpose }),
     });
     const o = await res.json();
     if (!res.ok) { if (res.status === 401) openAuthModal(); setError(o.error || 'Could not start payment.'); return false; }
@@ -285,8 +302,8 @@ export default function CheckoutPage() {
         });
       } catch { /* ignore — don't block the order */ }
     }
-    if (payMethod === 'online') {
-      const opened = await payOnline();
+    if (payMethod === 'online' || codAdvance > 0) {
+      const opened = await payOnline(payMethod === 'online' ? 'full' : 'cod_advance');
       if (!opened) setPlacing(false);
     } else {
       await placeCOD();
@@ -496,7 +513,6 @@ export default function CheckoutPage() {
                   <div className="space-y-3 border-t border-border pt-4">
                     <Row label="Subtotal" value={formatPrice(subtotal)} />
                     {discount > 0 && <Row label={`Discount (${coupon?.code})`} value={`− ${formatPrice(discount)}`} />}
-                    <Row label="Shipping" value={shipping === 0 ? 'Free' : formatPrice(shipping)} />
                     <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
                       <span>Total</span><span>{formatPrice(total)}</span>
                     </div>
@@ -523,6 +539,13 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
+                  {payMethod === 'cod' && codAdvance > 0 && (
+                    <div className="mt-3 rounded-[5px] border border-border bg-secondary/30 p-3 text-sm space-y-1">
+                      <div className="flex justify-between"><span>Pay advance now</span><span className="font-bold">{formatPrice(codAdvance)}</span></div>
+                      <div className="flex justify-between text-muted-foreground"><span>Pay on delivery</span><span>{formatPrice(Math.max(0, total - codAdvance))}</span></div>
+                    </div>
+                  )}
+
                   {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
 
                   <button
@@ -531,7 +554,7 @@ export default function CheckoutPage() {
                     className="w-full mt-5 py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-foreground/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                   >
                     {placing && <Loader2 size={16} className="animate-spin" />}
-                    {placing ? 'Processing…' : payMethod === 'online' ? `Pay ${formatPrice(total)}` : 'Place order (COD)'}
+                    {placing ? 'Processing…' : payMethod === 'online' ? `Pay ${formatPrice(total)}` : codAdvance > 0 ? `Pay ${formatPrice(codAdvance)} & Place COD Order` : 'Place order (COD)'}
                   </button>
                   <p className="text-[10px] text-center text-muted-foreground mt-4 uppercase tracking-wider">Secure Checkout</p>
                 </div>
