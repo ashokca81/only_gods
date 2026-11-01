@@ -53,8 +53,19 @@ const Hero = () => {
     return () => { alive = false; };
   }, []);
 
+  // Title look (all defaults = the original design).
+  const mobileText = hero.titleMobile.trim() || hero.title;
+  const anyTitle = hero.titleDesktopShow || hero.titleMobileShow;
+  const align = hero.titlePosition === 'top' ? 'items-start pt-16 lg:pt-24' : hero.titlePosition === 'bottom' ? 'items-end pb-24 lg:pb-32' : 'items-center';
+  const styleCls = hero.titleStyle === 'overlay' ? 'mix-blend-overlay' : '';
+  const titleStyle = {
+    '--hs': String(hero.titleSize / 100),
+    color: hero.titleStyle === 'outline' ? 'transparent' : hero.titleColor,
+    WebkitTextStroke: hero.titleStyle === 'outline' ? `2px ${hero.titleColor}` : undefined,
+  } as React.CSSProperties;
+
   return (
-    <section data-nav="dark" className="relative w-full h-[calc(100svh-4rem)] lg:h-screen overflow-hidden bg-black flex items-center justify-center">
+    <section data-nav="dark" className={`relative w-full h-[calc(100svh-4rem)] lg:h-screen overflow-hidden bg-black flex justify-center ${align}`}>
 
       {/* Background Video/Image */}
       <div className="absolute inset-0 z-0">
@@ -87,8 +98,13 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
         >
-          <h1 className="whitespace-nowrap text-[10.4vw] sm:text-[9.4vw] md:text-[10.4vw] lg:text-[11.3vw] leading-[0.85] font-black text-white mix-blend-overlay tracking-[0.1em] md:tracking-[0.15em] font-display uppercase">
-            {hero.title}
+          <h1
+            style={titleStyle}
+            className={`${anyTitle ? '' : 'sr-only'} whitespace-nowrap text-[calc(10.4vw*var(--hs))] sm:text-[calc(9.4vw*var(--hs))] md:text-[calc(10.4vw*var(--hs))] lg:text-[calc(11.3vw*var(--hs))] leading-[0.85] font-black ${styleCls} tracking-[0.1em] md:tracking-[0.15em] font-display uppercase`}
+          >
+            <span className={hero.titleMobileShow ? 'md:hidden' : 'hidden'}>{mobileText}</span>
+            <span className={hero.titleDesktopShow ? 'hidden md:inline' : 'hidden'}>{hero.title}</span>
+            {!anyTitle && hero.title}
           </h1>
         </motion.div>
 

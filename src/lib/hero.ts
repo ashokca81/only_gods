@@ -1,6 +1,8 @@
 // Shared Hero config — safe to import from both client and server (no server-only deps).
 
 export type MediaType = 'video' | 'image';
+export type TitleStyle = 'overlay' | 'solid' | 'outline';
+export type TitlePosition = 'top' | 'center' | 'bottom';
 
 export interface HeroConfig {
   title: string;
@@ -13,6 +15,14 @@ export interface HeroConfig {
   mobileType: MediaType;
   mobileUrl: string;
   mobilePoster: string;
+  // Title — advanced
+  titleDesktopShow: boolean;
+  titleMobileShow: boolean;
+  titleMobile: string;      // '' = same as title
+  titleSize: number;        // % of the default size (40–160)
+  titleColor: string;
+  titleStyle: TitleStyle;   // overlay = blended into the image (original look)
+  titlePosition: TitlePosition;
 }
 
 /** Current live look — used as fallback so the site never breaks when nothing is saved. */
@@ -29,6 +39,13 @@ export const DEFAULT_HERO: HeroConfig = {
   mobileType: 'image',
   mobileUrl: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
   mobilePoster: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
+  titleDesktopShow: true,
+  titleMobileShow: true,
+  titleMobile: '',
+  titleSize: 100,
+  titleColor: '#ffffff',
+  titleStyle: 'overlay',
+  titlePosition: 'center',
 };
 
 /** Merge a stored settings value (partial / unknown shape) onto the defaults. */
@@ -50,5 +67,12 @@ export function mergeHero(value: unknown): HeroConfig {
     mobileType: pickType(v.mobileType, DEFAULT_HERO.mobileType),
     mobileUrl: pick(v.mobileUrl, DEFAULT_HERO.mobileUrl),
     mobilePoster: pick(v.mobilePoster, DEFAULT_HERO.mobilePoster),
+    titleDesktopShow: typeof v.titleDesktopShow === 'boolean' ? v.titleDesktopShow : DEFAULT_HERO.titleDesktopShow,
+    titleMobileShow: typeof v.titleMobileShow === 'boolean' ? v.titleMobileShow : DEFAULT_HERO.titleMobileShow,
+    titleMobile: typeof v.titleMobile === 'string' ? v.titleMobile : DEFAULT_HERO.titleMobile,
+    titleSize: typeof v.titleSize === 'number' && v.titleSize >= 40 && v.titleSize <= 160 ? v.titleSize : DEFAULT_HERO.titleSize,
+    titleColor: typeof v.titleColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(v.titleColor) ? v.titleColor : DEFAULT_HERO.titleColor,
+    titleStyle: v.titleStyle === 'solid' || v.titleStyle === 'outline' || v.titleStyle === 'overlay' ? v.titleStyle : DEFAULT_HERO.titleStyle,
+    titlePosition: v.titlePosition === 'top' || v.titlePosition === 'bottom' || v.titlePosition === 'center' ? v.titlePosition : DEFAULT_HERO.titlePosition,
   };
 }
