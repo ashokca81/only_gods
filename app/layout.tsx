@@ -99,6 +99,19 @@ export const metadata: Metadata = {
     },
 };
 
+// A real phone (touch + small physical screen) whose browser claims to be a
+// desktop (no "Mobile" in the user agent) = Chrome "Desktop site" mode.
+// Pin the viewport to the phone's own width so the mobile design is used.
+// Real computers, tablets and normal phone browsing are never touched.
+const KEEP_MOBILE_VIEWPORT = `(function(){try{
+var w=Math.min(screen.width,screen.height);
+if(!(navigator.maxTouchPoints>0)||w>600||/Mobi/i.test(navigator.userAgent))return;
+function apply(){var m=document.querySelector('meta[name="viewport"]');
+if(!m){m=document.createElement('meta');m.name='viewport';document.head.appendChild(m);}
+var c='width='+screen.width+', initial-scale=1';if(m.content!==c)m.content=c;}
+apply();addEventListener('orientationchange',function(){setTimeout(apply,300);});new MutationObserver(apply).observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']});
+}catch(e){}})();`;
+
 export default function RootLayout({
     children,
 }: {
@@ -106,6 +119,10 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className={`${gillSans.variable}`} suppressHydrationWarning>
+            <head>
+                {/* Phone in Chrome "Desktop site" mode: keep the mobile layout. */}
+                <script dangerouslySetInnerHTML={{ __html: KEEP_MOBILE_VIEWPORT }} />
+            </head>
             <body className="font-sans antialiased bg-white text-black dark:bg-black dark:text-white" suppressHydrationWarning>
                 <ThemeProvider
                     attribute="class"
