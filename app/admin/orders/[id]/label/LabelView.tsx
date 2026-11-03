@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Printer } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
@@ -50,6 +50,25 @@ export default function LabelView({
     const t = setTimeout(() => window.print(), 600);
     return () => clearTimeout(t);
   }, [autoPrint]);
+
+  // Fit every item on the 4x6 label: shrink the text, then use 2 columns if needed.
+  const itemsBox = useRef<HTMLDivElement>(null);
+  const itemsList = useRef<HTMLUListElement>(null);
+  useLayoutEffect(() => {
+    const box = itemsBox.current, ul = itemsList.current;
+    if (!box || !ul) return;
+    let size = 11, cols = 1;
+    const apply = () => { ul.style.fontSize = `${size}px`; ul.style.columnCount = String(cols); };
+    apply();
+    for (let i = 0; i < 40 && box.scrollHeight > box.clientHeight + 1; i++) {
+      if (size > 8) size -= 0.5;
+      else if (cols === 1) { cols = 2; size = 10; }
+      else if (size > 6.5) size -= 0.5;
+      else break;
+      apply();
+    }
+  }, [order.order_items]);
+  const totalQty = (order.order_items ?? []).reduce((a, it) => a + (Number(it.quantity) || 0), 0);
 
   const isCod = (order.payment_method || 'cod').toLowerCase() === 'cod';
   const date = new Date(order.created_at).toLocaleDateString('en-IN', {
@@ -134,9 +153,9 @@ export default function LabelView({
         </div>
 
         {/* Items */}
-        <div className="items">
-          <div className="mini">ITEMS ({order.order_items?.length ?? 0})</div>
-          <ul>
+        <div className="items" ref={itemsBox}>
+          <div className="mini">ITEMS ({order.order_items?.length ?? 0}) · TOTAL QTY {totalQty}</div>
+          <ul ref={itemsList}>
             {order.order_items?.map((it) => (
               <li key={it.id}>
                 <span className="iname">
@@ -359,6 +378,8 @@ export default function LabelView({
           overflow: hidden;
         }
         .items ul {
+          font-size: 11px;
+          column-gap: 10px;
           list-style: none;
           margin: 4px 0 0;
           padding: 0;
@@ -367,7 +388,8 @@ export default function LabelView({
           display: flex;
           justify-content: space-between;
           gap: 8px;
-          font-size: 11px;
+          font-size: inherit;
+          break-inside: avoid;
           padding: 2px 0;
           border-bottom: 1px dotted #999;
         }
@@ -384,7 +406,7 @@ export default function LabelView({
           flex-shrink: 0;
         }
         .spacer {
-          flex: 1;
+          flex: 0 0 4px;
         }
         .footer {
           text-align: center;
