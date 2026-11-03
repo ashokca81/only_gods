@@ -111,20 +111,6 @@ const ProductCard = ({ product, index = 0, hideCarousel = false }: ProductCardPr
           {/* Overlay */}
           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-all duration-500" />
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.newArrival && (
-              <span className="px-3 py-1 bg-foreground text-background text-[10px] tracking-[0.15em] uppercase font-semibold rounded-full">
-                New
-              </span>
-            )}
-            {product.originalPrice && (
-              <span className="px-3 py-1 bg-destructive text-destructive-foreground text-[10px] tracking-[0.15em] uppercase font-semibold rounded-full">
-                Sale
-              </span>
-            )}
-          </div>
-
           {/* Actions */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
             <button
