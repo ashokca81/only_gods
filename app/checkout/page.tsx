@@ -45,7 +45,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<Form>(empty);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [payMethod, setPayMethod] = useState<'cod' | 'online'>('cod');
+  const [payMethod, setPayMethod] = useState<'cod' | 'online'>('online');
 
   // Saved addresses (like Amazon/Flipkart)
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
@@ -446,10 +446,21 @@ export default function CheckoutPage() {
                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] mt-8 mb-3">Payment</h2>
                 <div className="flex items-center gap-3 rounded-xl border border-foreground bg-secondary/30 p-4">
                   <input type="radio" checked readOnly className="h-4 w-4" />
-                  <div>
-                    <p className="text-sm font-bold">Cash on Delivery</p>
-                    <p className="text-xs text-muted-foreground">Pay with cash when your order arrives.</p>
-                  </div>
+                  {payMethod === 'online' ? (
+                    <div>
+                      <p className="text-sm font-bold">Pay Online</p>
+                      <p className="text-xs text-muted-foreground">Pay securely with UPI, cards, net banking or wallets via PayU.</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-bold">Cash on Delivery</p>
+                      <p className="text-xs text-muted-foreground">
+                        {codAdvance > 0
+                          ? `Pay ${formatPrice(codAdvance)} advance online now, the rest in cash when your order arrives.`
+                          : 'Pay with cash when your order arrives.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -545,17 +556,17 @@ export default function CheckoutPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        onClick={() => setPayMethod('cod')}
-                        className={`rounded-[5px] border px-3 py-3 text-sm font-medium transition-colors ${payMethod === 'cod' ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/50'}`}
-                      >
-                        💵 Cash on Delivery
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setPayMethod('online')}
                         className={`rounded-[5px] border px-3 py-3 text-sm font-medium transition-colors ${payMethod === 'online' ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/50'}`}
                       >
                         💳 Pay Online
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPayMethod('cod')}
+                        className={`rounded-[5px] border px-3 py-3 text-sm font-medium transition-colors ${payMethod === 'cod' ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/50'}`}
+                      >
+                        💵 Cash on Delivery
                       </button>
                     </div>
                   </div>
