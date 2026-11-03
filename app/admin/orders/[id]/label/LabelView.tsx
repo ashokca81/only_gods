@@ -5,6 +5,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Printer } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 
+// Scanning the label QR opens the order's products on the website.
+const QR_BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.theonlygods.com').replace(/\/$/, '');
+
 export interface LabelItem {
   id: string;
   name: string;
@@ -132,7 +135,7 @@ export default function LabelView({
             {order.pincode && <div className="pin">PIN: {order.pincode}</div>}
           </div>
           <div className="qr">
-            <QRCodeSVG value={order.order_no} size={104} level="M" />
+            <QRCodeSVG value={`${QR_BASE}/o/${encodeURIComponent(order.order_no)}`} size={104} level="M" />
             <div className="qrcaption">{order.order_no}</div>
           </div>
         </div>
