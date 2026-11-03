@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionValue } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { useCollections } from '@/hooks/useCollections';
@@ -52,7 +52,20 @@ const Runway = () => {
     const { scrollYProgress } = useScroll({
         target: targetRef,
     });
-    const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"]);
+    // Slide exactly until the last card is fully in view (measured, not a fixed %).
+    const trackRef = useRef<HTMLDivElement>(null);
+    const distance = useMotionValue(0);
+    useEffect(() => {
+        const el = trackRef.current;
+        if (!el) return;
+        const measure = () => distance.set(Math.max(0, el.scrollWidth - window.innerWidth));
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        window.addEventListener('resize', measure);
+        return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+    }, [distance, looks.length]);
+    const x = useTransform([scrollYProgress, distance], ([p, d]) => -(p as number) * (d as number));
 
     return (
         <>
@@ -65,15 +78,6 @@ const Runway = () => {
                             <RunwayCard look={look} className="aspect-[3/4] rounded-none" />
                         </div>
                     ))}
-                    {/* End Card Mobile */}
-                    <div className="snap-center shrink-0 w-[85vw] aspect-[3/4] flex items-center justify-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
-                        <Link href="/collections" className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center">
-                                <ArrowUpRight size={24} />
-                            </div>
-                            <span className="text-sm font-bold uppercase tracking-widest text-black dark:text-white">View All</span>
-                        </Link>
-                    </div>
                 </div>
             </section>
 
@@ -96,22 +100,12 @@ const Runway = () => {
                     </div>
 
                     {/* Horizontal Scroll Track */}
-                    <motion.div style={{ x }} className="flex h-full items-center pl-[30vw] pr-[10vw] gap-16">
+                    <motion.div ref={trackRef} style={{ x }} className="flex w-max h-full items-center pl-[30vw] pr-[10vw] gap-16">
                         {looks.map((look, i) => (
                             <div key={i} className="relative shrink-0 w-[24vw] aspect-[2/3] group">
                                 <RunwayCard look={look} className="h-full w-full transition-all duration-700 hover:scale-105" />
                             </div>
                         ))}
-
-                        {/* End Card Desktop */}
-                        <div className="shrink-0 w-[20vw] aspect-[2/3] flex items-center justify-center border-l border-black/10 dark:border-white/10 ml-10">
-                            <Link href="/collections" className="group flex flex-col items-center gap-8">
-                                <div className="w-32 h-32 rounded-full border border-black/20 dark:border-white/20 flex items-center justify-center group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all duration-500">
-                                    <ArrowUpRight size={48} className="group-hover:rotate-45 transition-transform duration-500" />
-                                </div>
-                                <span className="text-2xl font-black uppercase tracking-widest font-display text-black/50 group-hover:text-black dark:text-white/50 dark:group-hover:text-white transition-colors">View Lookbook</span>
-                            </Link>
-                        </div>
                     </motion.div>
 
                     {/* Scroll Progress Indicator */}
