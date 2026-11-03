@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
+import { useCollections } from '@/hooks/useCollections';
+import { inCollection } from '@/lib/collections';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { DEFAULT_CATEGORIES, type Category } from '@/lib/categories';
 
@@ -15,6 +17,7 @@ export default function ShopPage() {
     useScrollRestoration();
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [collection, setCollection] = useState<string | null>(null);
+    const collectionsList = useCollections();
     const [sortBy, setSortBy] = useState('Featured');
     const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
     const { data: products } = useProducts();
@@ -53,13 +56,16 @@ export default function ShopPage() {
     const filtered = useMemo(() => {
         let items = products;
         // Collection is an independent season-wise filter (mixes all categories).
-        if (collection) items = items.filter((p) => (p.collections ?? []).includes(collection));
+        if (collection) {
+            const col = collectionsList.find((c) => c.title === collection) ?? { title: collection, categories: [] };
+            items = items.filter((p) => inCollection(p, col));
+        }
         if (selectedCategory !== 'All') items = items.filter((p) => p.category === selectedCategory);
         if (sortBy === 'Price: Low to High') items = [...items].sort((a, b) => a.price - b.price);
         if (sortBy === 'Price: High to Low') items = [...items].sort((a, b) => b.price - a.price);
         if (sortBy === 'Newest') items = [...items].filter((p) => p.newArrival).concat(items.filter((p) => !p.newArrival));
         return items;
-    }, [selectedCategory, collection, sortBy, products]);
+    }, [selectedCategory, collection, sortBy, products, collectionsList]);
 
     return (
         <div className="min-h-screen bg-background pb-20 lg:pb-0 flex flex-col">

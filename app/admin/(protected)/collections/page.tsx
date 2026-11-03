@@ -1,25 +1,23 @@
 import { getServerSupabase } from '@/lib/supabase/server';
 import { mergeCollections } from '@/lib/collections';
-import CollectionsManager from './CollectionsManager';
+import { mergeCategories } from '@/lib/categories';
+import CollectionsManager, { type AdminProduct } from './CollectionsManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CollectionsAdminPage() {
   const supabase = await getServerSupabase();
-  const [{ data: colRow }, { data: products }] = await Promise.all([
+  const [{ data: colRow }, { data: catRow }, { data: products }] = await Promise.all([
     supabase!.from('settings').select('value').eq('key', 'collections').single(),
-    supabase!.from('products').select('collections').eq('is_active', true),
+    supabase!.from('settings').select('value').eq('key', 'categories').single(),
+    supabase!.from('products').select('id, name, image, category, collections, is_active').order('name'),
   ]);
 
-  const collections = mergeCollections(colRow?.value);
-
-  // Live count of products tagged into each collection.
-  const counts: Record<string, number> = {};
-  for (const p of products ?? []) {
-    for (const name of ((p as { collections: string[] | null }).collections ?? [])) {
-      counts[name] = (counts[name] ?? 0) + 1;
-    }
-  }
-
-  return <CollectionsManager initialCollections={collections} counts={counts} />;
+  return (
+    <CollectionsManager
+      initialCollections={mergeCollections(colRow?.value)}
+      categories={mergeCategories(catRow?.value).map((c) => c.name)}
+      initialProducts={(products ?? []) as AdminProduct[]}
+    />
+  );
 }

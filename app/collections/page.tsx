@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollRestorer from '@/components/ScrollRestorer';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { mergeCollections } from '@/lib/collections';
+import { mergeCollections, collectionCounts } from '@/lib/collections';
 
 export const metadata: Metadata = {
     title: 'Collections | ONLY GODS',
@@ -18,18 +18,13 @@ export default async function CollectionsPage() {
 
     const [{ data: settingRow }, { data: products }] = await Promise.all([
         supabase!.from('settings').select('value').eq('key', 'collections').single(),
-        supabase!.from('products').select('collections').eq('is_active', true),
+        supabase!.from('products').select('collections, category').eq('is_active', true),
     ]);
 
     const collections = mergeCollections(settingRow?.value);
 
-    // Live count of products tagged into each collection.
-    const counts = new Map<string, number>();
-    for (const p of products ?? []) {
-        for (const name of ((p as { collections: string[] | null }).collections ?? [])) {
-            counts.set(name, (counts.get(name) ?? 0) + 1);
-        }
-    }
+    // Live count: products tagged into the collection + products of its categories.
+    const counts = collectionCounts(collections, (products ?? []) as { collections: string[] | null; category: string | null }[]);
 
     return (
         <div className="min-h-screen bg-background">
@@ -57,7 +52,7 @@ export default async function CollectionsPage() {
                                 key={`${col.title}-${index}`}
                                 name={col.title}
                                 image={col.image}
-                                count={counts.get(col.title) ?? 0}
+                                count={counts[col.title] ?? 0}
                                 index={index}
                                 href={`/shop?collection=${encodeURIComponent(col.title)}`}
                             />

@@ -1,21 +1,16 @@
 // Storefront "Collections" = season-wise curated groups (e.g. "Winter Season",
-// "New Models 2026"). Completely independent of product Categories. A product is
-// tagged with collection names; clicking a collection shows those products.
-// Safe to import from client and server.
+// "New Models 2026"). A product belongs to a collection when it is tagged with
+// the collection's name (products.collections) OR its category is one of the
+// collection's categories. Safe to import from client and server.
 
 export interface Collection {
   title: string;
   image: string;
+  categories: string[]; // every product in these categories is included automatically
 }
 
-const img = (id: string) =>
-  `https://images.unsplash.com/${id}?q=80&w=800&auto=format&fit=crop`;
-
-/** Fallback cards so the Collections page is never empty. */
-export const DEFAULT_COLLECTIONS: Collection[] = [
-  { title: 'Winter Season', image: img('photo-1511556820780-d912e42b4980') },
-  { title: 'New Models 2026', image: img('photo-1483985988355-763728e1935b') },
-];
+/** No built-in/dummy collections — only what the admin creates. */
+export const DEFAULT_COLLECTIONS: Collection[] = [];
 
 /** Normalise a stored settings value into a clean Collection[]. */
 export function mergeCollections(value: unknown): Collection[] {
@@ -27,7 +22,32 @@ export function mergeCollections(value: unknown): Collection[] {
     const title = typeof o.title === 'string' ? o.title.trim() : '';
     if (!title || seen.has(title.toLowerCase())) continue;
     seen.add(title.toLowerCase());
-    list.push({ title, image: typeof o.image === 'string' ? o.image.trim() : '' });
+    const categories: string[] = [];
+    for (const x of Array.isArray(o.categories) ? o.categories : []) {
+      const n = typeof x === 'string' ? x.trim() : '';
+      if (n && !categories.some((c) => c.toLowerCase() === n.toLowerCase())) categories.push(n);
+    }
+    list.push({ title, image: typeof o.image === 'string' ? o.image.trim() : '', categories });
   }
-  return list.length ? list : DEFAULT_COLLECTIONS;
+  return list;
+}
+
+/** Is this product in the collection (tagged by name, or via one of its categories)? */
+export function inCollection(
+  p: { collections?: string[] | null; category?: string | null },
+  col: Pick<Collection, 'title' | 'categories'>,
+): boolean {
+  if ((p.collections ?? []).includes(col.title)) return true;
+  const cat = (p.category ?? '').trim().toLowerCase();
+  return !!cat && col.categories.some((c) => c.toLowerCase() === cat);
+}
+
+/** Live item count per collection title. */
+export function collectionCounts(
+  cols: Collection[],
+  products: { collections?: string[] | null; category?: string | null }[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const col of cols) counts[col.title] = products.filter((p) => inCollection(p, col)).length;
+  return counts;
 }
