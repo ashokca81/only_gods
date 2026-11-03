@@ -119,7 +119,8 @@ const ProductCard = ({ product }: { product: GridItem }) => {
 
 const ProductGrid = () => {
   const { data: products } = useProducts();
-  const pickedIds = useHomeProducts();
+  const home = useHomeProducts();
+  const pickedIds = home.ids;
 
   // Admin-picked products (in order); fall back to all products when none chosen.
   const chosen =
@@ -140,9 +141,18 @@ const ProductGrid = () => {
       <div className="container mx-auto px-4 lg:px-8">
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-6 md:gap-y-10">
-          {items.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {items.map((product) => {
+            // Per-device ticks from Settings → Home products.
+            const offDesktop = home.hideDesktop.includes(product.id);
+            const offMobile = home.hideMobile.includes(product.id);
+            if (offDesktop && offMobile) return null;
+            const cls = offDesktop ? 'lg:hidden' : offMobile ? 'hidden lg:block' : '';
+            return cls ? (
+              <div key={product.id} className={cls}><ProductCard product={product} /></div>
+            ) : (
+              <ProductCard key={product.id} product={product} />
+            );
+          })}
         </div>
       </div>
     </section>

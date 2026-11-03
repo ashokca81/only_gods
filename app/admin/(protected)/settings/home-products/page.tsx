@@ -14,7 +14,7 @@ export default async function HomeProductsSettingsPage() {
       <Link href="/admin/settings" className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-800 mb-4">
         <ChevronLeft size={15} /> Settings
       </Link>
-      <HomeProductsForm initialIds={mergeHomeProducts(data?.value).ids} />
+      <HomeProductsForm initial={mergeHomeProducts(data?.value)} />
     </div>
   );
 }

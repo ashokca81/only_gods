@@ -1,15 +1,20 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Loader2, Save, Plus, X, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Loader2, Save, Plus, X, ArrowUp, ArrowDown, Search, Monitor, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useProducts';
 import { formatPrice } from '@/lib/format';
 import InfoCard from '../../_components/InfoCard';
+import type { HomeProducts } from '@/lib/homeProducts';
 
-export default function HomeProductsForm({ initialIds }: { initialIds: string[] }) {
+export default function HomeProductsForm({ initial }: { initial: HomeProducts }) {
   const { data: products } = useProducts();
-  const [ids, setIds] = useState<string[]>(initialIds);
+  const [ids, setIds] = useState<string[]>(initial.ids);
+  const [hideDesktop, setHideDesktop] = useState<string[]>(initial.hideDesktop);
+  const [hideMobile, setHideMobile] = useState<string[]>(initial.hideMobile);
+  const flip = (set: React.Dispatch<React.SetStateAction<string[]>>, id: string) =>
+    set((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
   const [q, setQ] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -27,7 +32,11 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
   const add = (id: string) => {
     setIds((p) => (p.includes(id) ? p : [...p, id]));
   };
-  const remove = (id: string) => setIds((p) => p.filter((x) => x !== id));
+  const remove = (id: string) => {
+    setIds((p) => p.filter((x) => x !== id));
+    setHideDesktop((l) => l.filter((x) => x !== id));
+    setHideMobile((l) => l.filter((x) => x !== id));
+  };
   const move = (i: number, dir: -1 | 1) =>
     setIds((prev) => {
       const j = i + dir;
@@ -43,11 +52,13 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
       const r = await fetch('/api/admin/home-products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ homeProducts: { ids } }),
+        body: JSON.stringify({ homeProducts: { ids, hideDesktop, hideMobile } }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || 'Save failed');
       setIds(j.homeProducts.ids as string[]);
+      setHideDesktop(j.homeProducts.hideDesktop as string[]);
+      setHideMobile(j.homeProducts.hideMobile as string[]);
       toast.success('Home products updated — live now');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Save failed');
@@ -91,6 +102,16 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{p.name}</p>
                   <p className="text-xs text-neutral-500">{formatPrice(p.price)}</p>
+                </div>
+                <div className="flex items-center gap-3 mr-2">
+                  <label className="flex items-center gap-1 text-xs cursor-pointer select-none" title="Show on desktop">
+                    <input type="checkbox" checked={!hideDesktop.includes(p.id)} onChange={() => flip(setHideDesktop, p.id)} className="h-4 w-4 accent-black" />
+                    <Monitor size={14} /> Desktop
+                  </label>
+                  <label className="flex items-center gap-1 text-xs cursor-pointer select-none" title="Show on mobile">
+                    <input type="checkbox" checked={!hideMobile.includes(p.id)} onChange={() => flip(setHideMobile, p.id)} className="h-4 w-4 accent-black" />
+                    <Smartphone size={14} /> Mobile
+                  </label>
                 </div>
                 <div className="flex items-center gap-1">
                   <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="w-8 h-8 rounded-[5px] border border-neutral-200 flex items-center justify-center disabled:opacity-30 hover:bg-neutral-50"><ArrowUp size={14} /></button>
@@ -148,6 +169,7 @@ export default function HomeProductsForm({ initialIds }: { initialIds: string[] 
           steps={[
             { title: 'Add any number', desc: 'Pick as many products as you want — there is no limit.' },
             { title: 'Order', desc: 'Use the up/down arrows — top is first on the grid.' },
+            { title: 'Desktop / Mobile', desc: 'ప్రతి product పక్కన Desktop, Mobile ticks — tick ఉన్న device లో మాత్రమే ఆ product కనిపిస్తుంది.' },
             { title: 'Show all', desc: 'Remove everything to go back to showing all products automatically.' },
             { title: 'Live', desc: 'Changes appear on the home page as soon as you Save.' },
           ]}
