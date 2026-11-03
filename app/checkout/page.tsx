@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Loader2, Phone, FileCheck2, X } from 'lucide-react';
+import { ShoppingBag, Loader2, Phone, FileCheck2, X, Minus, Plus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
@@ -39,7 +39,7 @@ interface SavedAddress {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, clear, ready, removeItem } = useCart();
+  const { items, subtotal, clear, ready, removeItem, updateQty } = useCart();
   const { customer, loading: custLoading } = useCustomer();
   const { openAuthModal } = useUI();
   const [form, setForm] = useState<Form>(empty);
@@ -464,9 +464,30 @@ export default function CheckoutPage() {
                         <img src={i.image} alt={i.name} className="w-12 h-14 rounded object-cover bg-secondary flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{i.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {[i.size, i.color].filter(Boolean).join(' · ')} × {i.quantity}
-                          </p>
+                          {(i.size || i.color) && (
+                            <p className="text-xs text-muted-foreground">{[i.size, i.color].filter(Boolean).join(' · ')}</p>
+                          )}
+                          <div className="mt-1.5 inline-flex items-center border border-border rounded-[5px] h-7">
+                            <button
+                              type="button"
+                              onClick={() => updateQty(cartKey(i), i.quantity - 1)}
+                              disabled={i.quantity <= 1 || placing}
+                              aria-label={`Decrease ${i.name}`}
+                              className="w-7 h-full flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-40"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="w-7 text-center text-xs font-bold">{i.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQty(cartKey(i), i.quantity + 1)}
+                              disabled={placing}
+                              aria-label={`Increase ${i.name}`}
+                              className="w-7 h-full flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-40"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 whitespace-nowrap">
                           <p className="font-medium">{formatPrice(i.price * i.quantity)}</p>
@@ -541,7 +562,13 @@ export default function CheckoutPage() {
 
                   {payMethod === 'cod' && codAdvance > 0 && (
                     <div className="mt-3 rounded-[5px] border border-border bg-secondary/30 p-3 text-sm space-y-1">
-                      <div className="flex justify-between"><span>Pay advance now</span><span className="font-bold">{formatPrice(codAdvance)}</span></div>
+                      <div className="flex justify-between gap-3">
+                        <span>
+                          Pay advance now
+                          {total > 0 && <span className="text-muted-foreground"> ({Math.round((codAdvance / total) * 100)}% of the total value of Product)</span>}
+                        </span>
+                        <span className="font-bold shrink-0">{formatPrice(codAdvance)}</span>
+                      </div>
                       <div className="flex justify-between text-muted-foreground"><span>Pay on delivery</span><span>{formatPrice(Math.max(0, total - codAdvance))}</span></div>
                     </div>
                   )}

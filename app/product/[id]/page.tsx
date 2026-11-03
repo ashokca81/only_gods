@@ -36,6 +36,7 @@ export default function ProductDetailPage() {
     };
     const id = params?.id as string;
     const { data: products, isPlaceholderData } = useProducts();
+    const [reviewSummary, setReviewSummary] = useState({ average: 0, count: 0 });
     const product = products.find((p) => p.id === id);
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
@@ -267,11 +268,14 @@ export default function ProductDetailPage() {
                                     <div className="space-y-4 border-b border-border pb-8">
                                         <div className="flex items-center justify-between">
                                             <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground">{product.category}</span>
-                                            <div className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                                                <Star size={12} fill="currentColor" />
-                                                <span>4.9</span>
-                                                <span className="text-muted-foreground font-normal">(124 Reviews)</span>
-                                            </div>
+                                            {/* Real rating from approved reviews only — hidden until there is one */}
+                                            {reviewSummary.count > 0 && (
+                                                <a href="#reviews" className="flex items-center gap-1 text-xs font-semibold text-foreground">
+                                                    <Star size={12} fill="currentColor" />
+                                                    <span>{reviewSummary.average}</span>
+                                                    <span className="text-muted-foreground font-normal">({reviewSummary.count} {reviewSummary.count === 1 ? 'Review' : 'Reviews'})</span>
+                                                </a>
+                                            )}
                                         </div>
                                         <h1 className="text-4xl lg:text-5xl font-black text-foreground font-display uppercase tracking-wide leading-none">{product.name}</h1>
                                         <div className="flex items-center gap-4 flex-wrap">
@@ -503,8 +507,8 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Reviews */}
-                <div className="container mx-auto px-4 lg:px-8 max-w-[1600px]">
-                    <ProductReviews productId={product.id} />
+                <div id="reviews" className="container mx-auto px-4 lg:px-8 max-w-[1600px] scroll-mt-24">
+                    <ProductReviews productId={product.id} onSummary={(average, count) => setReviewSummary({ average, count })} />
                 </div>
 
                 {/* Related */}

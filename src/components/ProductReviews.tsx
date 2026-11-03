@@ -27,7 +27,7 @@ function Stars({ value, size = 16, onPick }: { value: number; size?: number; onP
   );
 }
 
-export default function ProductReviews({ productId }: { productId: string }) {
+export default function ProductReviews({ productId, onSummary }: { productId: string; onSummary?: (average: number, count: number) => void }) {
   const { customer } = useCustomer();
   const { openAuthModal } = useUI();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -45,7 +45,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
   const load = () => {
     fetch(`/api/reviews?productId=${encodeURIComponent(productId)}`)
       .then((r) => r.json())
-      .then((j) => { setReviews(j.reviews ?? []); setAverage(j.average ?? 0); setCount(j.count ?? 0); })
+      .then((j) => { setReviews(j.reviews ?? []); setAverage(j.average ?? 0); setCount(j.count ?? 0); onSummary?.(j.average ?? 0, j.count ?? 0); })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
