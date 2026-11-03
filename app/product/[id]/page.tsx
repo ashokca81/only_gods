@@ -468,7 +468,7 @@ export default function ProductDetailPage() {
                                         <Accordion type="single" collapsible className="w-full">
                                             {(product.detailsCare && product.detailsCare.length > 0) || product.description ? (
                                             <AccordionItem value="details">
-                                                <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Receive & Returns</AccordionTrigger>
+                                                <AccordionTrigger className="text-xs uppercase tracking-[0.2em] font-bold">Inside the Piece & After Care</AccordionTrigger>
                                                 <AccordionContent>
                                                     {product.detailsCare && product.detailsCare.length > 0 ? (
                                                         <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-4 py-2">
