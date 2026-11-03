@@ -15,7 +15,7 @@ const RunwayCard = ({ look, className = "" }: { look: RunwayLook, className?: st
             <img
                 src={look.image}
                 alt={look.title}
-                className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 grayscale group-hover:grayscale-0"
+                className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                 loading="lazy"
             />
 
@@ -99,7 +99,7 @@ const Runway = () => {
                     <motion.div style={{ x }} className="flex h-full items-center pl-[30vw] pr-[10vw] gap-16">
                         {looks.map((look, i) => (
                             <div key={i} className="relative shrink-0 w-[24vw] aspect-[2/3] group">
-                                <RunwayCard look={look} className="h-full w-full grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-105" />
+                                <RunwayCard look={look} className="h-full w-full transition-all duration-700 hover:scale-105" />
                             </div>
                         ))}
 
