@@ -71,23 +71,24 @@ const Hero = () => {
       <div className="absolute inset-0 z-0">
         {ready && (
           <>
-            {/* Mobile */}
+            {/* Mobile — dimmed only while the title is shown */}
             <Media
               type={hero.mobileType}
               url={hero.mobileUrl}
               poster={hero.mobilePoster}
-              className="md:hidden w-full h-full object-cover opacity-60 scale-105"
+              className={`md:hidden w-full h-full object-cover scale-105 ${hero.titleMobileShow ? 'opacity-60' : ''}`}
             />
             {/* Desktop */}
             <Media
               type={hero.desktopType}
               url={hero.desktopUrl}
               poster={hero.desktopPoster}
-              className="hidden md:block w-full h-full object-cover opacity-60 scale-105"
+              className={`hidden md:block w-full h-full object-cover scale-105 ${hero.titleDesktopShow ? 'md:opacity-60' : ''}`}
             />
           </>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90" />
+        {/* Tint gradient — per device, only while the title is shown */}
+        <div className={`absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 ${hero.titleMobileShow ? '' : 'hidden'} ${hero.titleDesktopShow ? 'md:block' : 'md:hidden'}`} />
       </div>
 
       {/* Content */}
@@ -118,7 +119,7 @@ const Hero = () => {
       >
         <Link
           href={hero.ctaLink || '/shop'}
-          className="inline-block group text-white px-6 py-3 md:px-8 md:py-4 text-[10px] md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl"
+          className="inline-block group text-white px-6 py-3 md:px-8 md:py-4 text-[10px] md:text-base font-black uppercase tracking-[0.25em] hover:text-white/70 transition-all duration-300 hover:scale-105 drop-shadow-xl [text-shadow:0_1px_8px_rgba(0,0,0,0.75)]"
         >
           {hero.cta}
         </Link>
