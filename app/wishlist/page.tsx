@@ -1,33 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
 import { useCustomer } from '@/buffer/CustomerContext';
 import { useUI } from '@/buffer/UIContext';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-
-interface WishItem { id: string; name: string; price: number; image: string; category: string }
+import { useProducts } from '@/hooks/useProducts';
 
 export default function WishlistPage() {
   useScrollRestoration();
-  const { customer, loading, toggleWishlist } = useCustomer();
+  const { customer, loading, wishlistIds, wishlistReady, toggleWishlist } = useCustomer();
   const { openAuthModal } = useUI();
-  const [items, setItems] = useState<WishItem[]>([]);
-  const [fetched, setFetched] = useState(false);
+  // Favourites = saved ids + the product list the site already has (no extra
+  // request) — shows instantly; image = first photo, same as the cards.
+  const { data: products, isPlaceholderData } = useProducts();
+  const items = useMemo(() => {
+    const byId = new Map(products.map((p) => [p.id, p]));
+    return Array.from(wishlistIds)
+      .map((id) => byId.get(id))
+      .filter((p): p is (typeof products)[number] => !!p)
+      .map((p) => ({ id: p.id, name: p.name, price: p.price, category: p.category, image: (p.images && p.images[0]) || p.image }));
+  }, [products, wishlistIds]);
+  const fetched = wishlistReady && !isPlaceholderData;
 
-  useEffect(() => {
-    if (!customer) { setItems([]); setFetched(true); return; }
-    fetch('/api/wishlist').then((r) => r.json()).then((j) => { setItems(j.items ?? []); setFetched(true); }).catch(() => setFetched(true));
-  }, [customer]);
-
-  const remove = async (pid: string) => {
-    await toggleWishlist(pid);
-    setItems((w) => w.filter((x) => x.id !== pid));
-  };
+  const remove = (pid: string) => { void toggleWishlist(pid); };
 
   if (!loading && !customer) {
     return (
@@ -53,6 +53,18 @@ export default function WishlistPage() {
           <h1 className="text-2xl font-bold font-display uppercase tracking-wider mb-2">Gods Love Your Favourites</h1>
           <p className="text-muted-foreground mb-8">Keep the pieces that speak to you.</p>
           <Link href="/shop" className="px-8 py-3 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] rounded-[5px]">Explore Collection</Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!fetched && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center pt-32 pb-40 text-muted-foreground">
+          <Loader2 size={28} className="animate-spin" />
         </div>
         <Footer />
       </div>

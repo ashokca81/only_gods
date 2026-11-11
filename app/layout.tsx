@@ -6,6 +6,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import BottomNav from '@/components/BottomNav';
 import AuthModal from '@/components/AuthModal';
 import AbandonedCartSync from '@/components/AbandonedCartSync';
+import PendingPaymentCheck from '@/components/PendingPaymentCheck';
 import ScrollToTop from '@/components/ScrollToTop';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import { UIProvider } from '@/buffer/UIContext';
@@ -143,6 +144,7 @@ export default function RootLayout({
                                     <BottomNav />
                                     <AuthModal />
                                     <AbandonedCartSync />
+                                    <PendingPaymentCheck />
                                 </TooltipProvider>
                               </CustomerProvider>
                             </CartProvider>

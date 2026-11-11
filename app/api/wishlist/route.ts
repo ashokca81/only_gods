@@ -5,10 +5,11 @@ import { getServerSupabase } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(req: Request) {
   const cid = await getCustomerId();
   if (!cid) return NextResponse.json({ items: [] });
   const items = ((await callRpc('wishlist_list', { p_cid: cid })) ?? []) as { id: string; image: string }[];
+  if (new URL(req.url).searchParams.get('ids')) return NextResponse.json({ items: items.map((i) => ({ id: i.id })) });
   // Show the product's first photo (what the home/shop cards show), not the old cover.
   if (items.length) {
     const supabase = await getServerSupabase();

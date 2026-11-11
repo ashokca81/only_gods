@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
 import { DEFAULT_COD_TERMS, type CodTermsConfig } from '@/lib/codTerms';
+import { PENDING_PAYU_KEY } from '@/components/PendingPaymentCheck';
 import { useCart, cartKey } from '@/buffer/CartContext';
 import { useCustomer } from '@/buffer/CustomerContext';
 import { useUI } from '@/buffer/UIContext';
@@ -272,6 +273,8 @@ export default function CheckoutPage() {
     });
     const o = await res.json();
     if (!res.ok) { if (res.status === 401) openAuthModal(); setError(o.error || 'Could not start payment.'); return false; }
+    // Remember this payment so the cart is emptied once it succeeds (see PendingPaymentCheck).
+    try { localStorage.setItem(PENDING_PAYU_KEY, JSON.stringify({ txnid: o.fields?.txnid, at: Date.now() })); } catch { /* ignore */ }
 
     const formEl = document.createElement('form');
     formEl.method = 'POST';

@@ -1,12 +1,14 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format';
+import { useCart } from '@/buffer/CartContext';
+import { PENDING_PAYU_KEY } from '@/components/PendingPaymentCheck';
 
 function Confirmation() {
   const params = useParams();
@@ -17,6 +19,15 @@ function Confirmation() {
   const paidParam = search.get('paid');
   const paid = paidParam ? Number(paidParam) : 0;
   const fullyPaid = total != null && paid > 0 && paid >= total;
+
+  // Back from an online payment (full or COD advance): the order exists, so
+  // empty the cart that was just bought. (COD without advance clears before redirect.)
+  const { clear, ready } = useCart();
+  useEffect(() => {
+    if (!ready || !(paid > 0)) return;
+    clear();
+    try { localStorage.removeItem(PENDING_PAYU_KEY); } catch { /* ignore */ }
+  }, [ready, paid, clear]);
   const due = total != null ? Math.max(0, total - paid) : null;
 
   return (
