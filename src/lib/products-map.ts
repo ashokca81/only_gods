@@ -43,7 +43,7 @@ export function rowToProduct(row: ProductRow): Product {
     name: row.name,
     price: Number(row.price),
     originalPrice: row.original_price != null ? Number(row.original_price) : undefined,
-    image: row.image,
+    image: row.images?.[0] || row.image, // cover = first photo, same as the cards
     images: row.images ?? [],
     videos: row.videos ?? [],
     variants: row.variants ?? [],

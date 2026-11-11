@@ -61,7 +61,7 @@ function withDerived(input: ProductInput): ProductInput {
     colors: d.colors,
     sizes: d.sizes,
     stock: d.stock,
-    image: input.image || d.image,
+    image: d.image || input.image, // cover follows the first photo
     images: d.images,
   };
 }
