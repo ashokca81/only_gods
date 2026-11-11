@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { DEFAULT_HERO, type HeroConfig } from "@/lib/hero";
+import { mergeHero, type HeroConfig } from "@/lib/hero";
+import { useSetting } from "@/hooks/useSetting";
 
 function Media({
   type,
@@ -16,6 +16,7 @@ function Media({
   poster: string;
   className: string;
 }) {
+  if (!url) return null; // nothing set → no placeholder media
   if (type === 'image') {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt="Hero background" className={className} />;
@@ -39,19 +40,12 @@ function Media({
 }
 
 const Hero = () => {
-  const [hero, setHero] = useState<HeroConfig>(DEFAULT_HERO);
-  // Don't render any hero media until the real setting is loaded — avoids the
-  // default (placeholder) media flashing for a moment on first paint.
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    fetch('/api/settings/hero')
-      .then((r) => r.json())
-      .then((j) => { if (alive) { if (j?.hero) setHero(j.hero as HeroConfig); setReady(true); } })
-      .catch(() => { if (alive) setReady(true); });
-    return () => { alive = false; };
-  }, []);
+  // Nothing (no media, no title, no button) renders until the admin's real
+  // setting is known — never a built-in "Only Gods" text. Cached, so returning
+  // to the home page paints the image in the very first frame.
+  const loaded = useSetting<HeroConfig>('/api/settings/hero', (j) => mergeHero((j as { hero?: unknown })?.hero));
+  const ready = loaded !== null;
+  const hero: HeroConfig = loaded ?? mergeHero({ titleDesktopShow: false, titleMobileShow: false });
 
   // Title look (all defaults = the original design).
   const mobileText = hero.titleMobile.trim() || hero.title;
@@ -94,6 +88,7 @@ const Hero = () => {
       {/* Content */}
       <div className="relative z-10 w-full container mx-auto px-4 flex flex-col items-center justify-center text-center pt-20">
 
+        {ready && (
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -108,9 +103,11 @@ const Hero = () => {
             {!anyTitle && hero.title}
           </h1>
         </motion.div>
+        )}
 
       </div>
 
+      {ready && hero.cta.trim() !== '' && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,6 +121,7 @@ const Hero = () => {
           {hero.cta}
         </Link>
       </motion.div>
+      )}
 
     </section>
   );

@@ -25,20 +25,18 @@ export interface HeroConfig {
   titlePosition: TitlePosition;
 }
 
-/** Current live look — used as fallback so the site never breaks when nothing is saved. */
 export const DEFAULT_HERO: HeroConfig = {
-  title: 'Only Gods',
+  // No built-in text or media — everything comes from Settings → Hero.
+  title: '',
   subtitle: '',
-  cta: 'Shop Now',
+  cta: '',
   ctaLink: '/shop',
-  // Default is a static image (never an autoplay video) so nothing plays
-  // before the admin's hero setting loads.
   desktopType: 'image',
-  desktopUrl: 'https://images.unsplash.com/photo-1523396896303-1e8ee5006752?q=80&w=2940&auto=format&fit=crop',
-  desktopPoster: 'https://images.unsplash.com/photo-1523396896303-1e8ee5006752?q=80&w=2940&auto=format&fit=crop',
+  desktopUrl: '',
+  desktopPoster: '',
   mobileType: 'image',
-  mobileUrl: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
-  mobilePoster: 'https://images.pexels.com/videos/7710243/free-video-7710243.jpg?auto=compress&cs=tinysrgb&fit=crop&h=1920&w=1080',
+  mobileUrl: '',
+  mobilePoster: '',
   titleDesktopShow: true,
   titleMobileShow: true,
   titleMobile: '',

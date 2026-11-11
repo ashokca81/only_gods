@@ -5,9 +5,9 @@ import { DEFAULT_COLLECTIONS, mergeCollections, type Collection } from '@/lib/co
 
 let cache: Promise<Collection[]> | null = null;
 
-/** Storefront Collections, fetched once and shared across components. */
-export function useCollections(): Collection[] {
-  const [cols, setCols] = useState<Collection[]>(DEFAULT_COLLECTIONS);
+/** Storefront Collections + whether they have loaded, fetched once and shared. */
+export function useCollectionsState(): { collections: Collection[]; ready: boolean } {
+  const [state, setState] = useState({ collections: DEFAULT_COLLECTIONS, ready: false });
   useEffect(() => {
     if (!cache) {
       cache = fetch('/api/settings/collections')
@@ -16,8 +16,13 @@ export function useCollections(): Collection[] {
         .catch(() => DEFAULT_COLLECTIONS);
     }
     let alive = true;
-    cache.then((v) => { if (alive) setCols(v); });
+    cache.then((v) => { if (alive) setState({ collections: v, ready: true }); });
     return () => { alive = false; };
   }, []);
-  return cols;
+  return state;
+}
+
+/** Storefront Collections, fetched once and shared across components. */
+export function useCollections(): Collection[] {
+  return useCollectionsState().collections;
 }

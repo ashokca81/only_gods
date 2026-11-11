@@ -6,16 +6,7 @@ export interface Category {
   image: string;
 }
 
-const img = (id: string) =>
-  `https://images.unsplash.com/${id}?q=80&w=800&auto=format&fit=crop`;
-
-/** Fallback categories so the storefront never shows an empty filter bar. */
-export const DEFAULT_CATEGORIES: Category[] = [
-  { name: 'Hoodies', image: img('photo-1556821840-3a63f95609a7') },
-  { name: 'Zippers', image: img('photo-1503342217505-b0a15ec3261c') },
-  { name: 'Studded', image: img('photo-1521572163474-6864f9cf17ab') },
-  { name: 'Wildloom', image: img('photo-1506634572416-48cdfe530110') },
-];
+export const DEFAULT_CATEGORIES: Category[] = []; // no demo categories — only the admin's
 
 /** Normalise a stored settings value into a clean Category[]. */
 export function mergeCategories(value: unknown): Category[] {

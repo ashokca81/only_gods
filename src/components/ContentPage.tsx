@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useSetting } from '@/hooks/useSetting';
 import { Plus, Minus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { DEFAULT_PAGES, mergePageContent, type PageContent, type PageSlug } from '@/lib/pageContent';
+import { mergePageContent, type PageContent, type PageSlug } from '@/lib/pageContent';
 
 function Accordion({ sections }: { sections: PageContent['sections'] }) {
   const [open, setOpen] = useState<number | null>(0);
@@ -34,16 +36,8 @@ function Accordion({ sections }: { sections: PageContent['sections'] }) {
 }
 
 export default function ContentPage({ slug }: { slug: PageSlug }) {
-  const [page, setPage] = useState<PageContent>(DEFAULT_PAGES[slug]);
-
-  useEffect(() => {
-    let alive = true;
-    fetch(`/api/settings/page/${slug}`)
-      .then((r) => r.json())
-      .then((j) => { if (alive && j?.page) setPage(mergePageContent(j.page, slug)); })
-      .catch(() => { /* keep defaults */ });
-    return () => { alive = false; };
-  }, [slug]);
+  // Admin's page text only (null while loading — no built-in default text flash).
+  const page = useSetting<PageContent>(`/api/settings/page/${slug}`, (j) => mergePageContent((j as { page?: unknown })?.page, slug));
 
   const isFaq = slug === 'faq';
 
@@ -51,6 +45,12 @@ export default function ContentPage({ slug }: { slug: PageSlug }) {
     <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-20 lg:pb-0">
       <Navbar />
 
+      {!page ? (
+        <div className="min-h-[60vh] flex items-center justify-center text-black/40 dark:text-white/40">
+          <Loader2 size={28} className="animate-spin" />
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <header className="pt-28 md:pt-36 pb-10 md:pb-14 px-4 border-b border-black/10 dark:border-white/10">
         <div className="max-w-3xl mx-auto text-center">
@@ -82,6 +82,8 @@ export default function ContentPage({ slug }: { slug: PageSlug }) {
           )}
         </div>
       </main>
+      </>
+      )}
 
       <Footer />
     </div>

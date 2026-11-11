@@ -7,6 +7,8 @@ import { SOCIAL_ICONS } from "@/lib/socialIcons";
 
 const Footer = () => {
   const f = useFooter();
+  // Until the dashboard footer loads, keep the space but show no built-in text.
+  if (!f) return <footer className="bg-white dark:bg-black mt-16 pt-12 min-h-[220px]" aria-hidden />;
   const socials = f.socials.filter((s) => s.enabled && SOCIAL_ICONS[s.icon]);
 
   return (

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { DEFAULT_PAGES, mergePageContent, type PageContent } from '@/lib/pageContent';
+import { mergePageContent, type PageContent } from '@/lib/pageContent';
+import { useSetting } from '@/hooks/useSetting';
 import { toast } from 'sonner';
 
 const iconFor = (heading: string) => {
@@ -17,19 +18,13 @@ const iconFor = (heading: string) => {
 };
 
 export default function ContactPage() {
-  const [page, setPage] = useState<PageContent>(DEFAULT_PAGES.contact);
+  // Admin's contact page text only — empty while loading, never built-in defaults.
+  const loaded = useSetting<PageContent>('/api/settings/page/contact', (j) => mergePageContent((j as { page?: unknown })?.page, 'contact'));
+  const page: PageContent = loaded ?? { title: '', intro: '', sections: [] };
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
-    fetch('/api/settings/page/contact')
-      .then((r) => r.json())
-      .then((j) => { if (alive && j?.page) setPage(mergePageContent(j.page, 'contact')); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -61,7 +56,7 @@ export default function ContactPage() {
       <header className="pt-28 md:pt-36 pb-10 md:pb-14 px-4 border-b border-black/10 dark:border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-black/40 dark:text-white/40 mb-3">We&rsquo;re Listening</p>
-          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight font-display">{page.title || 'Contact Us'}</h1>
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight font-display">{page.title}</h1>
           {page.intro.trim() !== '' && (
             <p className="mt-5 text-base md:text-lg text-black/60 dark:text-white/60 leading-relaxed max-w-2xl mx-auto">{page.intro}</p>
           )}

@@ -9,22 +9,8 @@ export interface CarouselSlide {
   category: string; // category name -> links to /shop?category=<name>
 }
 
-const img = (id: string, w = 1600) =>
-  `https://images.unsplash.com/${id}?q=80&w=${w}&auto=format&fit=crop`;
-
-/** Fallback slides so the carousel is never empty before the admin sets it up. */
-const defImg = (id: string, title: string, category: string): CarouselSlide => ({
-  desktopImage: img(id), mobileImage: img(id, 800), title, category,
-});
-export const DEFAULT_CAROUSEL: CarouselSlide[] = [
-  defImg('photo-1483985988355-763728e1935b', 'Hoodies', 'Hoodies'),
-  defImg('photo-1521572163474-6864f9cf17ab', 'Studded', 'Studded'),
-  defImg('photo-1503342217505-b0a15ec3261c', 'Zippers', 'Zippers'),
-  defImg('photo-1556821840-3a63f95609a7', 'Wildloom', 'Wildloom'),
-  defImg('photo-1511556820780-d912e42b4980', 'Hoodies', 'Hoodies'),
-  defImg('photo-1539109136881-3be0616acf4b', 'Studded', 'Studded'),
-  defImg('photo-1509631179647-0177331693ae', 'Zippers', 'Zippers'),
-];
+/** No demo slides — the carousel stays hidden until the admin adds slides. */
+export const DEFAULT_CAROUSEL: CarouselSlide[] = [];
 
 /** Build the storefront link for a slide. */
 export function slideHref(s: CarouselSlide): string {
