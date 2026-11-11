@@ -1,5 +1,6 @@
 import { getServerSupabase } from '@/lib/supabase/server';
 import WaitlistManager, { type WaitRow } from './WaitlistManager';
+import FavouritesList, { type FavRow } from './FavouritesList';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,5 +23,32 @@ export default async function WaitlistPage() {
     };
   });
 
-  return <WaitlistManager initialRows={rows} />;
+  // Customer favourites (❤️), grouped by product.
+  const { data: favs, error: favErr } = await supabase!
+    .from('wishlist')
+    .select('product_id, created_at, customers(name, phone), products(name, image, images)')
+    .order('created_at', { ascending: false });
+  const groups = new Map<string, FavRow>();
+  for (const raw of favs ?? []) {
+    const f = raw as unknown as {
+      product_id: string; created_at: string;
+      customers: { name: string | null; phone: string | null } | { name: string | null; phone: string | null }[] | null;
+      products: { name: string; image: string | null; images: string[] | null } | { name: string; image: string | null; images: string[] | null }[] | null;
+    };
+    const c = Array.isArray(f.customers) ? f.customers[0] : f.customers;
+    const p = Array.isArray(f.products) ? f.products[0] : f.products;
+    const g = groups.get(f.product_id) ?? {
+      product_id: f.product_id, product_name: p?.name ?? '(deleted product)', image: p?.images?.[0] || p?.image || null, customers: [],
+    };
+    g.customers.push({ name: c?.name ?? null, phone: c?.phone ?? null, at: f.created_at });
+    groups.set(f.product_id, g);
+  }
+  const favRows = Array.from(groups.values()).sort((a, b) => b.customers.length - a.customers.length);
+
+  return (
+    <div>
+      <FavouritesList rows={favRows} error={favErr ? `Could not read favourites: ${favErr.message}` : null} />
+      <WaitlistManager initialRows={rows} />
+    </div>
+  );
 }

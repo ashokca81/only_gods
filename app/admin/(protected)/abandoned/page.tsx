@@ -28,5 +28,20 @@ export default async function AbandonedPage() {
     })
     .filter((r) => r.items.length > 0);
 
-  return <AbandonedManager initialRows={rows} />;
+  // Hide carts that were already bought: the customer has a (not cancelled)
+  // order containing every cart item. Old carts kept re-syncing after purchase,
+  // so their date can be later than the order — no time limit.
+  const ids = rows.map((r) => r.customer_id);
+  const { data: orders } = ids.length
+    ? await supabase!.from('orders').select('customer_id, status, order_items(name)').in('customer_id', ids)
+    : { data: [] };
+  const bought = (r: CartRow) =>
+    (orders ?? []).some((raw) => {
+      const o = raw as unknown as { customer_id: string; status: string | null; order_items: { name: string }[] | null };
+      if (o.customer_id !== r.customer_id || o.status === 'cancelled') return false;
+      const names = new Set((o.order_items ?? []).map((i) => i.name));
+      return r.items.every((i) => names.has(i.name));
+    });
+
+  return <AbandonedManager initialRows={rows.filter((r) => !bought(r))} />;
 }
